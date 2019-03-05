@@ -39,7 +39,7 @@ public class DBController extends DBConn {
 	}
 	public Exercise getExercise(long id) {
 		for (Exercise e : exercises) {
-			if ((Long) e.get("id") == id) return e;
+			if (e.id.equals(id)) return e;
 		}
 		Exercise e = new Exercise(id);
 		e.refresh(this);
@@ -60,7 +60,7 @@ public class DBController extends DBConn {
 	}
 	public Workout getWorkout(long id) {
 		for (Workout w : workouts) {
-			if (w.get("id").equals(id)) return w;
+			if (w.id.equals(id)) return w;
 		}
 		Workout w = new Workout(id);
 		w.refresh(this);
@@ -78,7 +78,7 @@ public class DBController extends DBConn {
 	}
 	public Equipment getEquipment(long id) {
 		for (Equipment e : equipment) {
-			if (e.get("id").equals(id)) return e;
+			if (e.id.equals(id)) return e;
 		}
 		Equipment e = new Equipment(id);
 		e.refresh(this);
@@ -96,7 +96,7 @@ public class DBController extends DBConn {
 	}
 	public ExerciseGroup getExerciseGroup(long id) {
 		for (ExerciseGroup g : groups) {
-			if (g.get("id").equals(id)) return g;
+			if (g.id.equals(id)) return g;
 		}
 		ExerciseGroup g = new ExerciseGroup(id);
 		g.refresh(this);

@@ -1,41 +1,85 @@
 package dbsystem;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.HashSet;
+import java.util.Objects;
 
 public class Workout extends BaseModel {
 	HashSet<WithEx> exercises;
+	public Long id = null;
+	public Timestamp timestamp = null;
+	public Integer performance = null;
+	public Integer shape = null;
+	public String note = null;
 	public Workout(long id) {
-		this.set("id", id);
+		this.id = id;
 	}
 	public Workout(Timestamp timestamp, int performance, int shape, String note) {
-		this.set("timestamp", timestamp);
-		this.set("performance", performance);
-		this.set("shape", shape);
-		this.set("note", note);
+		this.timestamp = timestamp;
+		this.performance = performance;
+		this.shape = shape;
+		this.note = note;
 	}
 	@Override
 	void describe() {
-		this.name = "Workout";
-		attributeNames = new String[] {"id", "timestamp", "performance", "shape", "note"};
-		attributes.put("id", new Attribute<Long>("id", Types.BIGINT, Flags.PRIMARY_KEY, true));
-		attributes.put("timestamp", new Attribute<Timestamp>("timestamp", Types.TIMESTAMP));
-		attributes.put("performance", new Attribute<Integer>("performance", Types.SMALLINT));
-		attributes.put("shape", new Attribute<Integer>("shape", Types.SMALLINT));
-		attributes.put("note", new Attribute<String>("note", Types.NVARCHAR));
+		tableName = "Workout";
+		autoinc = true;
+		attributeNames = new String[] {"timestamp", "performance", "shape", "note"};
+		mutableAttributeNames = attributeNames;
+		primaryKeyNames = new String[] {"id"};
 		exercises = new HashSet<WithEx>();
 	}
 	@Override
+	public void setAttributes(ResultSet rs, int domain) {
+		try {
+			if (domain == Domains.SELECT) {
+				timestamp = rs.getTimestamp("timestamp");
+				performance = rs.getInt("performance");
+				shape = rs.getInt("shape");
+				note = rs.getString("note");
+				id = rs.getLong("id");
+			} else if (domain == Domains.INIT) {
+				id = rs.getLong(1);
+			}
+		} catch (Exception e) {
+			System.out.println("Failed to set attributes: " + tableName + " " + e.getMessage());
+		}
+	}
+	@Override
+	void getAttributes(PreparedStatement st, int domain, int index) {
+		try {
+			if (domain == Domains.SAVE || domain == Domains.INIT) {
+				st.setTimestamp(index, timestamp);
+				st.setInt(index + 1, performance);
+				st.setInt(index + 2, shape);
+				st.setString(index + 3, note);
+			} else if (domain == Domains.SELECT) {
+				st.setLong(index, id);
+			}
+			if (domain == Domains.SAVE) {
+				st.setLong(index + 4, id);
+			}
+		} catch (Exception e) {
+			System.out.println("Failed to get attributes: " + tableName + " " + e.getMessage());
+		}
+	}
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+	public boolean equals(Object other) {
+		return other instanceof Workout && ((Workout) other).id.equals(id);
+	}
+	@Override
 	public String toString() {
-		String s = "Workout:\t" + get("id") + "\ntimestamp:\t" + get("timestamp").toString()
-				+ "\nperformance:\t" + get("performance") + "\nshape:\t\t" + get("shape")
-				+ "\nnote:\t\t" + get("note") + "\n";
+		String s = "Workout:\t" + id + "\ntimestamp:\t" + timestamp.toString()
+				+ "\nperformance:\t" + performance + "\nshape:\t\t" + shape
+				+ "\nnote:\t\t" + note + "\n";
 		for (WithEx we : exercises) {
 			s = s + we.ex.toString().replace("\n", "\n\t");
-			s = s + "order:\t" + we.get("intorder") + "\n";
+			s = s + "order:\t" + we.intorder + "\n";
 		}
 		return s;
 	}
@@ -43,7 +87,7 @@ public class Workout extends BaseModel {
 		exercises.clear();
 		try {
 			Statement st = dbc.con.createStatement();
-			ResultSet rs = st.executeQuery("SELECT * FROM WithEx WHERE WorkoutId=" + get("id"));
+			ResultSet rs = st.executeQuery("SELECT * FROM WithEx WHERE WorkoutId=" + id);
 			while (rs.next()) {
 				Exercise ex = dbc.getExercise(rs.getLong("ExerciseId"));
 				buildWithEx(rs.getInt("intorder"), ex, false);
@@ -54,9 +98,9 @@ public class Workout extends BaseModel {
 		}
 	}
 	public WithEx buildWithEx(int intorder, Exercise ex, boolean create) {
-		Long ExerciseId = ex.get("id");
+		Long ExerciseId = ex.id;
 		for (WithEx we : exercises) {
-			if (ex.get("ExerciseId") == ExerciseId && we.get("intorder").equals(intorder)) {
+			if (we.ExerciseId.equals(ExerciseId) && we.intorder.equals(intorder)) {
 				return we;
 			}
 		}

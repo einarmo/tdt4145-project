@@ -13,6 +13,8 @@ public class WorkoutDiary {
 		Workout w = dbc.createWorkout(6, 6, "I'm very tired now thanks");
 		
 		Exercise ex = dbc.createExercise("Big lifts", "Lift big");
+		ex.description = "Bigger lifts";
+		ex.save(dbc);
 		
 		Exercise ex2 = dbc.createExercise("Deep squats", "Squats that are deep");
 		
@@ -31,9 +33,6 @@ public class WorkoutDiary {
 		ex.createWithEq(5, 2.5, e, dbc);
 		System.out.println(w.toString());
 		exg3.destroy(dbc);
-		w.refresh(dbc);
-		System.out.println(w.toString());
-		w.destroy(dbc);
 		System.out.println(dbc.equipmentLength());
 		System.out.println(dbc.workoutsLength());
 		System.out.println(dbc.exercisesLength());

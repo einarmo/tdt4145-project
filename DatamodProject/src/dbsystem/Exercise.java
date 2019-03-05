@@ -1,33 +1,74 @@
 package dbsystem;
 
-import java.sql.Types;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.HashSet;
+import java.util.Objects;
 
 public class Exercise extends BaseModel {
 	HashSet<WithEx> workouts;
 	HashSet<WithGr> groups;
 	WithEq eq;
+	public Long id = null;
+	public String name = null;
+	public String description = null;
 	public Exercise(long id) {
-		set("id", id);
+		this.id = id;
 	}
 	public Exercise(String name, String description) {
-		set("description", description);
-		set("name", name);
+		this.name = name;
+		this.description = description;
 	}
 	@Override
 	void describe() {
-		name = "Exercise";
-		attributeNames = new String[] {"id", "name", "description"};
-		attributes.put("id", new Attribute<Long>("id", Types.BIGINT, Flags.PRIMARY_KEY, true));
-		attributes.put("name", new Attribute<String>("name", Types.VARCHAR));
-		attributes.put("description", new Attribute<String>("description", Types.NVARCHAR));
+		tableName = "Exercise";
+		autoinc = true;
+		attributeNames = new String[] {"name", "description"};
+		mutableAttributeNames = attributeNames;
+		primaryKeyNames = new String[] {"id"};
 		workouts = new HashSet<WithEx>();
 		groups = new HashSet<WithGr>();
 	}
 	@Override
+	public void setAttributes(ResultSet rs, int domain) {
+		try {
+			if (domain == Domains.SELECT) {
+				id = rs.getLong("id");
+				name = rs.getString("name");
+				description = rs.getString("description");
+			} else if (domain == Domains.INIT) {
+				id = rs.getLong(1);
+			}
+		} catch (Exception e) {
+			System.out.println("Failed to set attributes: " + tableName + " " + e.getMessage());
+		}
+	}
+	@Override
+	void getAttributes(PreparedStatement st, int domain, int index) {
+		try {
+			if (domain == Domains.SAVE || domain == Domains.INIT) {
+				st.setString(index, "name");
+				st.setString(index + 1, description);
+			} else if (domain == Domains.SELECT) {
+				st.setLong(index, id);
+			}
+			if (domain == Domains.SAVE) { 
+				st.setLong(index + 2, id);
+			}
+		} catch (Exception e) {
+			System.out.println("Failed to get attributes: " + tableName + " " + e.getMessage());
+		}
+	}
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+	public boolean equals(Object other) {
+		return other instanceof Exercise && ((Exercise) other).id.equals(id);
+	}
+	@Override
 	public String toString() {
-		String s = "Exercise:\t" + get("id") + "\nname:\t\t" + get("name") + "\ndescription:\t"
-				+ get("description") + "\n";
+		String s = "Exercise:\t" + id + "\nname:\t\t" + name + "\ndescription:\t"
+				+ description + "\n";
 		if (eq != null) {
 			s = s + eq.eq.toString() + "\n";
 		}
@@ -37,18 +78,18 @@ public class Exercise extends BaseModel {
 		return s;
 	}
 	public WithEx buildWithEx(Integer intorder, Workout wo, boolean create) {
-		Long WorkoutId = wo.get("id");
+		Long WorkoutId = wo.id;
 		for (WithEx we : workouts) {
-			if (we.get("WorkoutId").equals(WorkoutId) && we.get("intorder").equals(intorder)) return we;
+			if (we.WorkoutId.equals(WorkoutId) && we.intorder.equals(intorder)) return we;
 		}
 		WithEx we = create ? new WithEx(intorder, this, wo) : wo.buildWithEx(intorder, this, true);
 		workouts.add(we);
 		return we;
 	}
 	public WithGr buildWithGr(int intensity, ExerciseGroup gr, boolean create) {
-		Long GroupId = gr.get("id");
+		Long GroupId = gr.id;
 		for (WithGr wg : groups) {
-			if (wg.get("GroupId").equals(GroupId)) return wg;
+			if (wg.GroupId.equals(GroupId)) return wg;
 		}
 		WithGr wg = create ? new WithGr(intensity, this, gr) : gr.buildWithGr(intensity, this, true);
 		groups.add(wg);
@@ -61,7 +102,7 @@ public class Exercise extends BaseModel {
 	}
 	public WithEq buildWithEq(int sets, double kilos, Equipment eq, boolean create) {
 		if (this.eq != null) {
-			if (!this.eq.get("EquipmentId").equals(eq.get("EquipmentId"))) {
+			if (!this.eq.EquipmentId.equals(eq.id)) {
 				throw new RuntimeException("Attempt to overwrite equipment");
 			}
 			return this.eq;

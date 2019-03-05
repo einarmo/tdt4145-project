@@ -1,16 +1,21 @@
 package dbsystem;
 
-import java.sql.Types;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.Objects;
 
 public class WithGr extends BaseModel {
 	public Exercise ex;
 	public ExerciseGroup gr;
+	Long ExerciseId;
+	Long GroupId;
+	Integer intensity;
 	public WithGr(int intensity, Exercise ex, ExerciseGroup gr) {
-		set("GroupId", gr.get("id"));
-		set("ExerciseId", ex.get("id"));
-		set("intensity", intensity);
 		this.ex = ex;
 		this.gr = gr;
+		this.GroupId = gr.id;
+		this.ExerciseId = ex.id;
+		this.intensity = intensity;
 	}
 	@Override
 	public String toString() {
@@ -18,11 +23,48 @@ public class WithGr extends BaseModel {
 	}
 	@Override
 	void describe() {
-		name = "WithGr";
+		tableName = "WithGr";
 		attributeNames = new String[] {"GroupId", "ExerciseId", "intensity"};
-		attributes.put("GroupId", new Attribute<Long>("GroupId", Types.BIGINT, Flags.PRIMARY_KEY, false));
-		attributes.put("ExerciseId", new Attribute<Long>("ExerciseId", Types.BIGINT, Flags.PRIMARY_KEY, false));
-		attributes.put("intensity", new Attribute<Integer>("intensity", Types.SMALLINT));
+		mutableAttributeNames = new String[] {"intensity"};
+		primaryKeyNames = new String[] {"GroupId", "ExerciseId"};
+	}
+	@Override
+	public void setAttributes(ResultSet rs, int domain) {
+		try {
+			if (domain == Domains.SELECT) {
+				GroupId = rs.getLong("GroupId");
+				ExerciseId = rs.getLong("ExerciseId");
+				intensity = rs.getInt("intensity");
+			}
+		} catch (Exception e) {
+			System.out.println("Failed to set attributes: " + tableName + " " + e.getMessage());
+		}
+	}
+	@Override
+	void getAttributes(PreparedStatement st, int domain, int index) {
+		try {
+			if (domain == Domains.INIT) {
+				st.setLong(index, GroupId);
+				st.setLong(index + 1, ExerciseId);
+				st.setInt(index + 2, intensity);
+			} else if (domain == Domains.SELECT) {
+				st.setLong(index,  GroupId);
+				st.setLong(index + 1, ExerciseId);
+			} else if (domain == Domains.SAVE) {
+				st.setInt(index, intensity);
+				st.setLong(index + 1, GroupId);
+				st.setLong(index + 2, ExerciseId);
+			}
+		} catch (Exception e) {
+			System.out.println("Failed to get attributes: " + tableName + " " + e.getMessage());
+		}
+	}
+	public int hashCode() {
+		return Objects.hash(GroupId, ExerciseId);
+	}
+	public boolean equals(Object other) {
+		return other instanceof WithGr && ((WithGr) other).GroupId.equals(GroupId)
+				&& ((WithGr) other).ExerciseId.equals(ExerciseId);
 	}
 	@Override
 	public void remove(DBController dbc) {
