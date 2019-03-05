@@ -3,7 +3,6 @@ import dbsystem.Workout;
 import dbsystem.Equipment;
 import dbsystem.Exercise;
 import dbsystem.ExerciseGroup;
-import dbsystem.WithEx;
 
 public class WorkoutDiary {
 	public static void main(String[] args) {

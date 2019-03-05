@@ -1,2 +1,4 @@
 /bin/
 /mysql-connector-java-8.0.15.jar
+/.classpath
+/config.txt

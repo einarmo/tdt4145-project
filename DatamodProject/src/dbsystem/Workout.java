@@ -5,7 +5,6 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.HashSet;
-import java.util.PriorityQueue;
 
 public class Workout extends BaseModel {
 	HashSet<WithEx> exercises;

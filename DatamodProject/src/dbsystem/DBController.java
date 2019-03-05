@@ -2,7 +2,6 @@ package dbsystem;
 
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 
 public class DBController extends DBConn {
