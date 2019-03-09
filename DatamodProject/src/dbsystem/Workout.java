@@ -4,11 +4,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Objects;
 
-public class Workout extends BaseModel {
-	HashSet<WithEx> exercises;
+public class Workout extends BaseModel implements Comparable<Workout>{
+	public HashSet<WithEx> exercises;
 	public Long id = null;
 	public Timestamp timestamp = null;
 	public Integer performance = null;
@@ -83,6 +85,17 @@ public class Workout extends BaseModel {
 		}
 		return s;
 	}
+	public String toListString() {
+		Calendar c = Calendar.getInstance();
+		c.setTime(timestamp);
+		DateFormat d = DateFormat.getInstance();
+		d.setCalendar(c);
+		return "timestamp: " + d.format(timestamp) + ", exercises: " + exercises.size();
+	}
+	public String toDescString() {
+		return "<html><b>Workout:</b>\t " + id + "<br>Performance:\t " + performance + "<br>Shape:\t\t " + shape
+				+ "<br>Exercises: " + exercises.size() + "<br>Note: <br>" + note.replace("\n", "<br>") + "</html>";
+	}
 	public void refreshExercises(DBController dbc) {
 		exercises.clear();
 		try {
@@ -108,9 +121,10 @@ public class Workout extends BaseModel {
 		exercises.add(we);
 		return we;
 	}
-	public void createWithEx(int intorder, Exercise ex, DBController dbc) {
+	public WithEx createWithEx(int intorder, Exercise ex, DBController dbc) {
 		WithEx we = buildWithEx(intorder, ex, false);
 		we.initialize(dbc);
+		return we;
 	}
 	public void removeExercise(WithEx we) {
 		exercises.remove(we);
@@ -121,5 +135,9 @@ public class Workout extends BaseModel {
 			we.ex.removeWorkout(we);
 		}
 		dbc.removeWorkout(this);
+	}
+	@Override
+	public int compareTo(Workout other) {
+		return (int) (timestamp.compareTo(other.timestamp));
 	}
 }

@@ -14,7 +14,7 @@ public abstract class BaseModel {
 	public abstract void remove(DBController dbc);
 	public abstract void setAttributes(ResultSet rs, int domain);
 	abstract void getAttributes(PreparedStatement st, int domain, int index);
-	static class Domains {
+	public static class Domains {
 		static int SAVE = 0;
 		static int INIT = 1;
 		static int SELECT = 2;
@@ -95,7 +95,7 @@ public abstract class BaseModel {
 			}
 			PreparedStatement st = dbc.con.prepareStatement("DELETE FROM " + tableName + " " + clause + ";");
 			getAttributes(st, Domains.SELECT, 1);
-			System.out.println(st.toString());
+			st.executeUpdate();
 		} catch (Exception e) {
 			System.out.println("Failed to destroy " + tableName + ": " + e.getMessage());
 		}

@@ -24,7 +24,9 @@ public class WithEq extends BaseModel {
 	public String toString() {
 		return "";
 	}
-
+	public String toDescString() {
+		return "sets:\t" + sets + "<br>kilos:\t" + kilos + "<br>" + eq.toString().replace("\n", "<br>");
+	}
 	@Override
 	void describe() {
 		tableName = "WithEq";

@@ -31,7 +31,7 @@ public class Equipment extends BaseModel {
 		try {
 			if (domain == Domains.SELECT) {
 				id = rs.getLong("id");
-				name = rs.getString("note");
+				name = rs.getString("name");
 				description = rs.getString("description");
 			} else if (domain == Domains.INIT) {
 				id = rs.getLong(1);
@@ -44,7 +44,7 @@ public class Equipment extends BaseModel {
 	void getAttributes(PreparedStatement st, int domain, int index) {
 		try {
 			if (domain == Domains.SAVE || domain == Domains.INIT) {
-				st.setString(index, "name");
+				st.setString(index, name);
 				st.setString(index + 1, description);
 			} else if (domain == Domains.SELECT) {
 				st.setLong(index, id);

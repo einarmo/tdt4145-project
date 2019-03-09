@@ -2,10 +2,11 @@ package dbsystem;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Objects;
 
-public class Exercise extends BaseModel {
+public class Exercise extends BaseModel implements Comparable<Exercise> {
 	HashSet<WithEx> workouts;
 	HashSet<WithGr> groups;
 	WithEq eq;
@@ -47,7 +48,7 @@ public class Exercise extends BaseModel {
 	void getAttributes(PreparedStatement st, int domain, int index) {
 		try {
 			if (domain == Domains.SAVE || domain == Domains.INIT) {
-				st.setString(index, "name");
+				st.setString(index, name);
 				st.setString(index + 1, description);
 			} else if (domain == Domains.SELECT) {
 				st.setLong(index, id);
@@ -76,6 +77,43 @@ public class Exercise extends BaseModel {
 			s = s + wg.gr.toString().replace("\n", "\n\t") + "\n";
 		}
 		return s;
+	}
+	public String toDescString() {
+		String s = "<html><b>Exercise:</b>\t" + id + "<br>name:\t" + name + "<br>description:\t"
+				+ description.replace("\n", "<br>") + "<br>";
+		if (eq != null) {
+			s = s + eq.toDescString() + "<br>";
+		}
+		s = s + "<br>groups:\t" + groups.size();
+		return s;
+	}
+	public String toListString() {
+		return "id: " + id + ", name: " + name;
+	}
+	public void refreshFull(DBController dbc) {
+		eq = null;
+		groups.clear();
+		try {
+			Statement st = dbc.con.createStatement();
+			ResultSet rs = st.executeQuery("SELECT * FROM WithGr WHERE ExerciseId=" + id + ";");
+			while (rs.next()) {
+				ExerciseGroup gr = dbc.getExerciseGroup(rs.getLong("GroupId"));
+				buildWithGr(rs.getInt("intensity"), gr, false);
+			}
+		} catch (Exception e) {
+			System.out.println("Failed to load groups " + e.getMessage());
+		}
+		try {
+			Statement st = dbc.con.createStatement();
+			ResultSet rs = st.executeQuery("SELECT * FROM WithEq WHERE ExerciseId=" + id + ";");
+			if (rs.next()) {
+				Equipment eq = dbc.getEquipment(rs.getLong("EquipmentId"));
+				buildWithEq(rs.getInt("sets"), rs.getDouble("kilos"), eq, false);
+			}
+		} catch (Exception e) {
+			System.out.println("Failed to load equipment " + e.getMessage());
+		}
+		System.out.println("Refresh full exercise");
 	}
 	public WithEx buildWithEx(Integer intorder, Workout wo, boolean create) {
 		Long WorkoutId = wo.id;
@@ -140,5 +178,9 @@ public class Exercise extends BaseModel {
 			eq.eq.removeExercise(eq);
 		}
 		dbc.removeExercise(this);
+	}
+	@Override
+	public int compareTo(Exercise other) {
+		return id.compareTo(other.id);
 	}
 }

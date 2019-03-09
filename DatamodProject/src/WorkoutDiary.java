@@ -1,5 +1,8 @@
+import java.util.Scanner;
+
 import dbsystem.DBController;
 import dbsystem.Workout;
+import ui.WorkoutList;
 import dbsystem.Equipment;
 import dbsystem.Exercise;
 import dbsystem.ExerciseGroup;
@@ -11,6 +14,8 @@ public class WorkoutDiary {
 		Equipment e = dbc.createEquipment("Handlebar big", "Very long and even prettier");
 		
 		Workout w = dbc.createWorkout(6, 6, "I'm very tired now thanks");
+		dbc.createWorkout(1, 1, "Test 1");
+		dbc.createWorkout(2, 2, "Test 2");
 		
 		Exercise ex = dbc.createExercise("Big lifts", "Lift big");
 		ex.description = "Bigger lifts";
@@ -31,12 +36,10 @@ public class WorkoutDiary {
 		ex2.createWithGr(6, exg3, dbc);
 		ex2.createWithGr(7, exg, dbc);
 		ex.createWithEq(5, 2.5, e, dbc);
-		System.out.println(w.toString());
-		exg3.destroy(dbc);
-		System.out.println(dbc.equipmentLength());
-		System.out.println(dbc.workoutsLength());
-		System.out.println(dbc.exercisesLength());
-		System.out.println(dbc.groupsLength());
-
+		
+		dbc.wipe();
+		WorkoutList ui = new WorkoutList(dbc);
+		ui.setWList(dbc.fetchWorkouts(0, 0));
+		ui.setFEList(dbc.fetchExercises(0, 0));
 	}
 }
