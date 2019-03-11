@@ -8,8 +8,8 @@ import java.util.Objects;
 
 public class Exercise extends BaseModel implements Comparable<Exercise> {
 	HashSet<WithEx> workouts;
-	HashSet<WithGr> groups;
-	WithEq eq;
+	public HashSet<WithGr> groups;
+	public WithEq eq;
 	public Long id = null;
 	public String name = null;
 	public String description = null;

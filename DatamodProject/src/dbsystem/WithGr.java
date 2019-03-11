@@ -21,6 +21,9 @@ public class WithGr extends BaseModel {
 	public String toString() {
 		return "";
 	}
+	public String toEListString() {
+		return gr.toListString() + ", intensity: " + intensity;
+	}
 	@Override
 	void describe() {
 		tableName = "WithGr";

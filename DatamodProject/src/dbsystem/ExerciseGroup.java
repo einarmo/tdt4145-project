@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 import java.util.HashSet;
 import java.util.Objects;
 
-public class ExerciseGroup extends BaseModel {
+public class ExerciseGroup extends BaseModel implements Comparable<ExerciseGroup> {
 	HashSet<WithGr> exercises;
 	public Long id;
 	public String name;
@@ -62,6 +62,12 @@ public class ExerciseGroup extends BaseModel {
 	public String toString() {
 		return "Group:\t" + id + "\nname:\t" + name;
 	}
+	public String toListString() {
+		return "Group: " + id + ", name: " + name;
+	}
+	public String toDescString() {
+		return "<html><b>Group:\t</b>" + id + "<br>name:\t" + name + "</html>";
+	}
 	public WithGr buildWithGr(int intensity, Exercise ex, boolean create) {
 		Long ExerciseId = ex.id;
 		for (WithGr wg : exercises) {
@@ -81,5 +87,8 @@ public class ExerciseGroup extends BaseModel {
 		}
 		dbc.removeGroup(this);
 	}
-
+	@Override
+	public int compareTo(ExerciseGroup other) {
+		return id.compareTo(other.id);
+	}
 }

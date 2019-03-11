@@ -10,24 +10,24 @@ public abstract class BaseModel {
 	public String[] mutableAttributeNames; // All except primary keys
 	public String[] primaryKeyNames; // All primary keys (also auto-inc)
 	boolean autoinc = false;
-	abstract void describe();
 	public abstract void remove(DBController dbc);
 	public abstract void setAttributes(ResultSet rs, int domain);
 	abstract void getAttributes(PreparedStatement st, int domain, int index);
+	abstract void describe();
+	public BaseModel() {
+		describe();
+	}
 	public static class Domains {
 		static int SAVE = 0;
 		static int INIT = 1;
 		static int SELECT = 2;
-	}
-	public BaseModel() {
-		describe();
 	}
 	public boolean save(DBController dbc) {
 		try {
 			String fields = "";
 			String clause = "WHERE ";
 			for (int i = 0; i < mutableAttributeNames.length; i++) {
-				fields = fields + (i != 0 ? ", " : "") + attributeNames[i] + "=?";
+				fields = fields + (i != 0 ? ", " : "") + mutableAttributeNames[i] + "=?";
 			}
 			for (int i = 0; i < primaryKeyNames.length; i++) {
 				clause = clause + (i != 0 ? " AND " : "") + primaryKeyNames[i] + "=?";

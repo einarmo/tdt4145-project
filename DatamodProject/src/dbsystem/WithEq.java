@@ -60,7 +60,7 @@ public class WithEq extends BaseModel {
 			} else if (domain == Domains.SAVE) {
 				st.setInt(index, sets);
 				st.setDouble(index + 1, kilos);
-				st.setLong(index, ExerciseId);
+				st.setLong(index + 2, ExerciseId);
 			}
 		} catch (Exception e) {
 			System.out.println("Failed to get attributes: " + tableName + " " + e.getMessage());

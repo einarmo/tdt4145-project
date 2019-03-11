@@ -67,6 +67,12 @@ public class Equipment extends BaseModel {
 		return "Equipment:\t" + id + "\nname: \t\t" + name
 				+ "\ndescription:\t" + description;
 	}
+	public String toListString() {
+		return "id: " + id + ", name: " + name;
+	}
+	public String toDescString() {
+		return "<html><b>Equipment:</b>\t" + id + "<br>name:\t" + name + "<br>description: " + description;
+	}
 	public WithEq buildWithEq(int sets, double kilos, Exercise ex, boolean create) {
 		Long ExerciseId = ex.id;
 		for (WithEq we : exercises) {

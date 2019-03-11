@@ -54,9 +54,17 @@ public class DBController extends DBConn {
 	public void removeExercise(Exercise ex) {
 		exercises.remove(ex.hashCode());
 	}
-	ArrayList<Exercise> initExercises(ResultSet rs) {
-		ArrayList<Exercise> lst = new ArrayList<Exercise>();
+	public ArrayList<Exercise> fetchExercises(int limit, int offset) {
 		try {
+			Statement st = con.createStatement();
+			ResultSet rs;
+			if (limit == 0) {
+				rs = st.executeQuery("Select * FROM Exercise ORDER BY id DESC");
+			} else {
+				rs = st.executeQuery("SELECT * FROM Exercise ORDER BY id DESC LIMIT " + limit
+					+ " OFFSET " + offset);
+			}
+			ArrayList<Exercise> lst = new ArrayList<Exercise>();
 			while (rs.next()) {
 				Long id = rs.getLong("id");
 				if (id != null) {
@@ -72,22 +80,7 @@ public class DBController extends DBConn {
 					}
 				}
 			}
-		} catch (Exception e) {
-			System.out.println("Failed to initialize exercises: " + e.getMessage());
-		}
-		return lst;
-	}
-	public ArrayList<Exercise> fetchExercises(int limit, int offset) {
-		try {
-			Statement st = con.createStatement();
-			ResultSet rs;
-			if (limit == 0) {
-				rs = st.executeQuery("Select * FROM Exercise ORDER BY id DESC");
-			} else {
-				rs = st.executeQuery("SELECT * FROM Exercise ORDER BY id DESC LIMIT " + limit
-					+ " OFFSET " + offset);
-			}
-			return initExercises(rs);
+			return lst;
 		} catch (Exception e) {
 			System.out.println("Failed to fetch workouts: " + e.getMessage());
 			return new ArrayList<Exercise>();
@@ -110,9 +103,17 @@ public class DBController extends DBConn {
 		workouts.put(w.hashCode(), w);
 		return w;
 	}
-	ArrayList<Workout> initWorkouts(ResultSet rs) {
-		ArrayList<Workout> lst = new ArrayList<Workout>();
+	public ArrayList<Workout> fetchWorkouts(int limit, int offset) {
 		try {
+			Statement st = con.createStatement();
+			ResultSet rs;
+			if (limit == 0) {
+				rs = st.executeQuery("Select * FROM Workout ORDER BY timestamp DESC, id DESC");
+			} else {
+				rs = st.executeQuery("SELECT * FROM Workout ORDER BY timestamp DESC, id DESC LIMIT " + limit
+					+ " OFFSET " + offset);
+			}
+			ArrayList<Workout> lst = new ArrayList<Workout>();
 			while (rs.next()) {
 				Long id = rs.getLong("id");
 				if (id != null) {
@@ -126,22 +127,7 @@ public class DBController extends DBConn {
 					}
 				}
 			}
-		} catch (Exception e) {
-			System.out.println("Failed to initialize workouts: " + e.getMessage());
-		}
-		return lst;
-	}
-	public ArrayList<Workout> fetchWorkouts(int limit, int offset) {
-		try {
-			Statement st = con.createStatement();
-			ResultSet rs;
-			if (limit == 0) {
-				rs = st.executeQuery("Select * FROM Workout ORDER BY timestamp DESC, id DESC");
-			} else {
-				rs = st.executeQuery("SELECT * FROM Workout ORDER BY timestamp DESC, id DESC LIMIT " + limit
-					+ " OFFSET " + offset);
-			}
-			return initWorkouts(rs);
+			return lst;
 		} catch (Exception e) {
 			System.out.println("Failed to fetch workouts: " + e.getMessage());
 			return new ArrayList<Workout>();
@@ -167,6 +153,35 @@ public class DBController extends DBConn {
 	public void removeEquipment(Equipment eq) {
 		equipment.remove(eq.hashCode());
 	}
+	public ArrayList<Equipment> fetchEquipment(int limit, int offset) {
+		try {
+			Statement st = con.createStatement();
+			ResultSet rs;
+			if (limit == 0) {
+				rs = st.executeQuery("Select * FROM Equipment ORDER BY id DESC");
+			} else {
+				rs = st.executeQuery("SELECT * FROM Equipment ORDER BY id DESC LIMIT " + limit
+					+ " OFFSET " + offset);
+			}
+			ArrayList<Equipment> lst = new ArrayList<Equipment>();
+			while (rs.next()) {
+				Long id = rs.getLong("id");
+				if (id != null) {
+					if (equipment.containsKey(Objects.hash(id))) {
+						lst.add(equipment.get(Objects.hash(id)));
+					} else {
+						Equipment eq = new Equipment(id);
+						eq.setAttributes(rs, BaseModel.Domains.SELECT);
+						lst.add(eq);
+					}
+				}
+			}
+			return lst;
+		} catch (Exception e) {
+			System.out.println("Failed to fetch equipment: " + e.getMessage());
+			return new ArrayList<Equipment>();
+		}
+	}
 	public ExerciseGroup createExerciseGroup(String name) {
 		ExerciseGroup g = new ExerciseGroup(name);
 		g.initialize(this);
@@ -183,6 +198,35 @@ public class DBController extends DBConn {
 	}
 	public void removeGroup(ExerciseGroup gr) {
 		groups.remove(gr.hashCode());
+	}
+	public ArrayList<ExerciseGroup> fetchGroups(int limit, int offset) {
+		try {
+			Statement st = con.createStatement();
+			ResultSet rs;
+			if (limit == 0) {
+				rs = st.executeQuery("Select * FROM ExerciseGroup ORDER BY id DESC");
+			} else {
+				rs = st.executeQuery("SELECT * FROM ExerciseGroup ORDER BY id DESC LIMIT " + limit
+					+ " OFFSET " + offset);
+			}
+			ArrayList<ExerciseGroup> lst = new ArrayList<ExerciseGroup>();
+			while (rs.next()) {
+				Long id = rs.getLong("id");
+				if (id != null) {
+					if (groups.containsKey(Objects.hash(id))) {
+						lst.add(groups.get(Objects.hash(id)));
+					} else {
+						ExerciseGroup gr = new ExerciseGroup(id);
+						gr.setAttributes(rs, BaseModel.Domains.SELECT);
+						lst.add(gr);
+					}
+				}
+			}
+			return lst;
+		} catch (Exception e) {
+			System.out.println("Failed to fetch equipment: " + e.getMessage());
+			return new ArrayList<ExerciseGroup>();
+		}
 	}
 	public void wipe() {
 		workouts.clear();
