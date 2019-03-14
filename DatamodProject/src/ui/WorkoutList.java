@@ -266,6 +266,7 @@ public class WorkoutList extends JFrame {
 	}
 	public void setEList(Workout w) {
 		eNamesList.clear();
+		activeEList.clear();
 		if (w == null) return;
 		ArrayList<WithEx> ex = new ArrayList<WithEx>(w.exercises);
 		Collections.sort(ex);
@@ -469,7 +470,7 @@ public class WorkoutList extends JFrame {
 				if (wNames.getSelectedIndex() <= 0 || feNames.getSelectedIndex() <= 0) return;
 				Workout w = activeWList.get(wNames.getSelectedIndex() - 1);
 				Exercise ex = activeFEList.get(feNames.getSelectedIndex() - 1);
-				int max = -1;
+				int max = 0;
 				for (WithEx we : w.exercises) {
 					if (max < we.intorder) {
 						max = we.intorder;
@@ -482,7 +483,7 @@ public class WorkoutList extends JFrame {
 				refreshWList();
 			} else if (command.equals("swapUp") || command.equals("swapDown")) {
 				int index = eNames.getSelectedIndex();
-				if (index == 0 && command.equals("swapUp")
+				if (index == 0 && command.equals("swapUp") || index < 0
 						|| index == (activeEList.size() - 1) && command.equals("swapDown")) return;
 				WithEx we = activeEList.get(index);
 				WithEx we2 = activeEList.get(index + (command.equals("swapUp") ? -1 : 1));
@@ -509,7 +510,7 @@ public class WorkoutList extends JFrame {
 				activeFEList.remove(index - 1);
 				feNamesList.remove(index);
 				refreshWList();
-				if (wNames.getSelectedIndex() >= 1) {
+				if (wNames.getSelectedIndex() > 0) {
 					setEList(activeWList.get(wNames.getSelectedIndex() - 1));
 				}
 			}

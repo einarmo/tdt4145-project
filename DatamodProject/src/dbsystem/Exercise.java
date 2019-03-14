@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Objects;
 
 public class Exercise extends BaseModel implements Comparable<Exercise> {
-	HashSet<WithEx> workouts;
+	public HashSet<WithEx> workouts;
 	public HashSet<WithGr> groups;
 	public WithEq eq;
 	public Long id = null;
@@ -113,7 +113,6 @@ public class Exercise extends BaseModel implements Comparable<Exercise> {
 		} catch (Exception e) {
 			System.out.println("Failed to load equipment " + e.getMessage());
 		}
-		System.out.println("Refresh full exercise");
 	}
 	public WithEx buildWithEx(Integer intorder, Workout wo, boolean create) {
 		Long WorkoutId = wo.id;

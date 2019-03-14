@@ -35,6 +35,8 @@ public class DBController extends DBConn {
 		String[] queries = readFileToString("createdb.sql", true).split(";");
 		executeQueries(queries);
 		System.out.println("Successfully initialized tables");
+		// Clean up potential swap-residue, this should not be neccessary, but it's convenient for now.
+		executeQueries(new String[] {"DELETE FROM WithEx WHERE intorder=0;"});
 	}
 	public Exercise createExercise(String description, String name) {
 		Exercise e = new Exercise(name, description);
@@ -68,9 +70,7 @@ public class DBController extends DBConn {
 			while (rs.next()) {
 				Long id = rs.getLong("id");
 				if (id != null) {
-					System.out.println("Init ex");
 					if (exercises.containsKey(Objects.hash(id))) {
-						System.out.println("Found exercise " + id);
 						lst.add(exercises.get(Objects.hash(id)));
 					} else {
 						Exercise w = new Exercise(id);

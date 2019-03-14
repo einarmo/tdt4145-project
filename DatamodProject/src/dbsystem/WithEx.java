@@ -83,6 +83,11 @@ public class WithEx extends BaseModel implements Comparable<WithEx> {
 	public void swapOrder(DBController dbc, WithEx other) {
 		if (other.WorkoutId != WorkoutId) return;
 		try {
+			// We have to remove the objects from any hashmaps/sets, as modifying hashed keys cause the sets to be invalidated
+			wo.removeExercise(this);
+			ex.removeWorkout(this);
+			other.wo.removeExercise(other);
+			other.ex.removeWorkout(other);
 			Statement st = dbc.con.createStatement();
 			int temp = intorder;
 			int temp2 = other.intorder;
@@ -93,7 +98,10 @@ public class WithEx extends BaseModel implements Comparable<WithEx> {
 			other.intorder = temp;
 			st.executeUpdate("UPDATE WithEx SET intorder=" + temp2 + " WHERE intorder=0 AND WorkoutId=" + WorkoutId);
 			intorder = temp2;
-			// We're in a hashset! Overlapping keys might cause issues, but 0 is always free.
+			wo.exercises.add(this);
+			ex.workouts.add(this);
+			other.wo.exercises.add(other);
+			other.ex.workouts.add(other);
 		} catch (Exception e) {
 			System.out.println("Failed to swap withEx: " + e.getMessage());
 		}
