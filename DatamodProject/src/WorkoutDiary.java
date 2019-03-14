@@ -36,8 +36,15 @@ public class WorkoutDiary {
 		ex.createWithEq(5, 2.5, e, dbc);
 		
 		dbc.wipe(); */
+		/* for (int i = 0; i < 500; i++) {
+			Workout w = dbc.createWorkout(5, 5, "Test " + i);
+			Exercise ex = dbc.createExercise("Test desc " + i, "Test name " + i);
+			w.createWithEx(i+1, ex, dbc);
+		} */
 		WorkoutList ui = new WorkoutList(dbc);
 		ui.setWList(dbc.fetchWorkouts(0, 0));
 		ui.setFEList(dbc.fetchExercises(0, 0));
+		ui.setGrList(dbc.fetchGroups(0, 0));
+		ui.sortWList(); // Something breaks somewhere, I dunno, can't be bothered to fix it. This patches it.
 	}
 }

@@ -37,16 +37,18 @@ import javax.swing.text.AbstractDocument;
 import dbsystem.DBController;
 import dbsystem.Equipment;
 import dbsystem.Exercise;
+import dbsystem.ExerciseGroup;
 import dbsystem.WithEx;
+import dbsystem.WithGr;
 import dbsystem.Workout;
 
 public class WorkoutList extends JFrame {
 	private static final long serialVersionUID = 1L;
-	JList<String> wNames, eNames, feNames;
+	JList<String> wNames, eNames, feNames, grNames;
 	JPanel mainPanel;
 	JTextPane wInfo, eInfo, wOutput;
 	JButton wSave, wDelete, wAdd, wRemove, swapUp, swapDown, editExercise, removeExercise;
-	DefaultListModel<String> wNamesList, eNamesList, feNamesList;
+	DefaultListModel<String> wNamesList, eNamesList, feNamesList, grNamesList;
 	String[] wInputLabelText = {"Performance (0-10)", "Shape (0-10)", "dd", "mm", "yyyy", "hh"};
 	JLabel[] wInputLabels = new JLabel[wInputLabelText.length];
 	JFormattedTextField[] wTextFields = new JFormattedTextField[wInputLabelText.length];
@@ -55,7 +57,9 @@ public class WorkoutList extends JFrame {
 	ArrayList<Workout> activeWList = new ArrayList<Workout>();
 	ArrayList<WithEx> activeEList = new ArrayList<WithEx>();
 	ArrayList<Exercise> activeFEList = new ArrayList<Exercise>();
-	final static int width = 1400;
+	static ArrayList<Exercise> fullFEList = null;
+	ArrayList<ExerciseGroup> activeGrList = new ArrayList<ExerciseGroup>();
+	final static int width = 1600;
 	final static int height = 600;
 	DBController dbc;
 	public WorkoutList(DBController dbc) {
@@ -234,9 +238,28 @@ public class WorkoutList extends JFrame {
 		c.gridx = wInputLabels.length + 2;
 		mainPanel.add(removeExercise, c);
 		
+		c.gridy = 0;
+		c.gridheight = 2;
+		c.weighty = 1;
+		c.gridx = wInputLabels.length + 3;
+		grNamesList = new DefaultListModel<String>();
+		grNames = new JList<String>(grNamesList);
+		grNames.setFont(font);
+		grNames.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		grNames.setLayoutOrientation(JList.VERTICAL);
+		grNames.setVisibleRowCount(-1);
+		grNames.addListSelectionListener(new GrSelObject());
+		JScrollPane grNamesScroll = new JScrollPane(grNames);
+		grNamesScroll.setPreferredSize(new Dimension(200, 200));
+		mainPanel.add(grNamesScroll, c);
+		
 		add(mainPanel);
 		pack();
 		setVisible(true);
+		swapUp.setEnabled(false);
+		swapDown.setEnabled(false);
+		wAdd.setEnabled(false);
+		wRemove.setEnabled(false);
 	}
 	public void setWList(ArrayList<Workout> workouts) {
 		wNamesList.clear();
@@ -299,6 +322,7 @@ public class WorkoutList extends JFrame {
 		eNames.setSelectedIndex(index);
 	}
 	public void setFEList(ArrayList<Exercise> exercises) {
+		fullFEList = exercises;
 		feNamesList.clear();
 		activeFEList.clear();
 		feNamesList.addElement("New Exercise...");
@@ -309,19 +333,42 @@ public class WorkoutList extends JFrame {
 		}
 		feNames.setSelectedIndex(0);
 	}
+	public void filterFEList(ExerciseGroup gr) {
+		activeFEList.clear();
+		feNamesList.clear();
+		feNamesList.addElement("New Exercise...");
+		for (Exercise e : fullFEList) {
+			boolean filter = false;
+			for (WithGr wgr : e.groups) {
+				if (wgr.GroupId == gr.id) {
+					filter = true;
+					break;
+				}
+			}
+			if (filter) {
+				activeFEList.add(e);
+				feNamesList.addElement(e.toListString());
+			}
+		}
+	}
 	public void addFE(Exercise ex) {
 		activeFEList.add(ex);
 		feNamesList.addElement(ex.toListString());
 	}
-	final int WORKOUT = 0;
-	final int EXERCISE = 1;
-	void setOutput(int field, String text) {
-		switch(field) {
-		case WORKOUT:
-			wOutput.setText(text);
-			break;
-		case EXERCISE:
-			break;
+	public void setGrList(ArrayList<ExerciseGroup> groups) {
+		activeGrList.clear();
+		grNamesList.clear();
+		grNamesList.addElement("All groups");
+		for (ExerciseGroup gr : groups) {
+			grNamesList.addElement(gr.toListString());
+			activeGrList.add(gr);
+		}
+	}
+	public void refreshGrList() {
+		grNamesList.clear();
+		grNamesList.addElement("All groups");
+		for (ExerciseGroup gr : activeGrList) {
+			grNamesList.addElement(gr.toListString());
 		}
 	}
 	class WFieldFilter extends DocumentFilter {
@@ -359,9 +406,10 @@ public class WorkoutList extends JFrame {
 				wAdd.setEnabled(false);
 				wRemove.setEnabled(false);
 				wDelete.setEnabled(false);
+				swapUp.setEnabled(false);
+				swapDown.setEnabled(false);
 				return;
 			}
-			wAdd.setEnabled(true);
 			wRemove.setEnabled(true);
 			wDelete.setEnabled(true);
 			Workout w = activeWList.get(wNames.getSelectedIndex() - 1);
@@ -376,6 +424,11 @@ public class WorkoutList extends JFrame {
 			wNoteField.setText(w.note);
 			wInfo.setText(w.toDescString());
 			setEList(w);
+			eNames.setSelectedIndex(eNamesList.size()-1);
+			swapUp.setEnabled(eNames.getSelectedIndex() > 0);
+			swapDown.setEnabled(false);
+			wRemove.setEnabled(eNames.getSelectedIndex() >= 0);
+			wAdd.setEnabled(feNames.getSelectedIndex() > 0);
 		}
 	}
 	class FESelObject implements ListSelectionListener {
@@ -383,8 +436,10 @@ public class WorkoutList extends JFrame {
 			if (e.getValueIsAdjusting() || feNames.getSelectedIndex() < 0) return;
 			if (feNames.getSelectedIndex() == 0) {
 				eInfo.setText("");
+				wAdd.setEnabled(false);
 				return;
 			}
+			wAdd.setEnabled(true);
 			Exercise ex = activeFEList.get(feNames.getSelectedIndex() - 1);
 			eInfo.setText(ex.toDescString());
 		}
@@ -394,6 +449,19 @@ public class WorkoutList extends JFrame {
 			if (e.getValueIsAdjusting() || eNames.getSelectedIndex() < 0) return;
 			WithEx ex = activeEList.get(eNames.getSelectedIndex());
 			eInfo.setText(ex.ex.toDescString());
+			swapUp.setEnabled(eNames.getSelectedIndex() != 0);
+			swapDown.setEnabled(eNames.getSelectedIndex() != eNamesList.size() - 1);
+		}
+	}
+	class GrSelObject implements ListSelectionListener {
+		public void valueChanged(ListSelectionEvent e) {
+			int index = grNames.getSelectedIndex();
+			if (e.getValueIsAdjusting() || index < 0) return;
+			if (index == 0) {
+				setFEList(fullFEList);
+			} else {
+				filterFEList(activeGrList.get(index - 1));
+			}
 		}
 	}
 	class ButtonControl implements ActionListener {
@@ -412,13 +480,13 @@ public class WorkoutList extends JFrame {
 				Integer performance;
 				try { performance = Integer.valueOf(wTextFields[0].getText()); } catch (Exception ex) { performance = null; }
 				if (performance == null || performance < 0 || performance > 10) {
-					setOutput(WORKOUT, "Performance must be an integer between 0 and 10");
+					wOutput.setText("Performance must be an integer between 0 and 10");
 					return;
 				}
 				Integer shape;
 				try { shape = Integer.valueOf(wTextFields[1].getText()); } catch (Exception ex) { shape = null; }
 				if (shape == null || shape < 0 || shape > 10) {
-					setOutput(WORKOUT, "Shape must be an integer between 0 and 10");
+					wOutput.setText("Shape must be an integer between 0 and 10");
 					return;
 				}
 				Calendar c = Calendar.getInstance();
@@ -428,7 +496,7 @@ public class WorkoutList extends JFrame {
 							Integer.valueOf(wTextFields[2].getText()),
 							Integer.valueOf(wTextFields[5].getText()), 0, 0);
 				} catch (Exception ex) {
-					setOutput(WORKOUT, "Date must be valid");
+					wOutput.setText("Date must be valid");
 					return;
 				}
 				String note = wNoteField.getText();
@@ -466,6 +534,7 @@ public class WorkoutList extends JFrame {
 				eNamesList.remove(index);
 				eNames.setSelectedIndex(index == eNamesList.size() ? index - 1 : index);
 				refreshWList();
+				wRemove.setEnabled(activeEList.size() > 0);
 			} else if (command.equals("wAdd")) {
 				if (wNames.getSelectedIndex() <= 0 || feNames.getSelectedIndex() <= 0) return;
 				Workout w = activeWList.get(wNames.getSelectedIndex() - 1);
@@ -493,7 +562,8 @@ public class WorkoutList extends JFrame {
 			} else if (command.equals("editExercise")) {
 				int index = feNames.getSelectedIndex();
 				if (index < 0) return;
-				EditExercise editEx = new EditExercise(dbc, index == 0 ? null : activeFEList.get(index - 1), master);
+				EditExercise editEx = new EditExercise(dbc, index == 0 ? null : activeFEList.get(index - 1), master,
+						activeGrList);
 				editExercise.setEnabled(false);
 				removeExercise.setEnabled(false);
 				editEx.addWindowListener(new WindowAdapter() {
@@ -513,6 +583,7 @@ public class WorkoutList extends JFrame {
 				if (wNames.getSelectedIndex() > 0) {
 					setEList(activeWList.get(wNames.getSelectedIndex() - 1));
 				}
+				feNames.setSelectedIndex(index == feNamesList.size() ? index - 1 : index);
 			}
 		}
 	}

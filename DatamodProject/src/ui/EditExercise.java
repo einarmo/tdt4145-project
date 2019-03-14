@@ -55,19 +55,17 @@ public class EditExercise extends JFrame {
 	DBController dbc;
 	Exercise active;
 	WorkoutList master;
-	public EditExercise(DBController dbc, Exercise active, WorkoutList master) {
+	public EditExercise(DBController dbc, Exercise active, WorkoutList master, ArrayList<ExerciseGroup> fullGrList) {
 		super(active == null ? "New exercise" : "Edit exercise " + active.id);
+		EditExercise.fullGrList = fullGrList;
 		this.dbc = dbc;
 		this.active = active;
 		this.master = master;
 		if (fullEqList == null) {
-			System.out.println("Fetch eq");
 			fullEqList = dbc.fetchEquipment(0, 0);
-			System.out.println(fullEqList.size());
 		}
 		if (fullGrList == null) {
 			fullGrList = dbc.fetchGroups(0, 0);
-			Collections.sort(fullGrList);
 		}
 		
 		mainPanel = new JPanel();
@@ -351,6 +349,7 @@ public class EditExercise extends JFrame {
 	}
 	public void addFGr(ExerciseGroup gr) {
 		fullGrList.add(gr);
+		master.refreshGrList();
 		loadFGrList();
 	}
 	public void addEq(Equipment eq) {

@@ -82,7 +82,6 @@ public abstract class BaseModel {
 			}
 		} catch (Exception e) {
 			System.out.println("Failed to initialize " + tableName + ": " + e.getMessage());
-			e.printStackTrace();
 			return false;
 		}
 		return true;
