@@ -135,7 +135,11 @@ public class Exercise extends BaseModel implements Comparable<Exercise> {
 	}
 	public WithGr createWithGr(int intensity, ExerciseGroup gr, DBController dbc) {
 		WithGr wg = buildWithGr(intensity, gr, false);
-		wg.initialize(dbc);
+		if (!wg.initialize(dbc)) {
+			groups.remove(wg);
+			wg.gr.removeExercise(wg);
+			return null;
+		}
 		return wg;
 	}
 	public WithEq buildWithEq(int sets, double kilos, Equipment eq, boolean create) {
@@ -154,7 +158,11 @@ public class Exercise extends BaseModel implements Comparable<Exercise> {
 			throw new RuntimeException("Attempt to overwrite equipment");
 		}
 		WithEq we = buildWithEq(sets, kilos, eq, false);
-		we.initialize(dbc);
+		if (!we.initialize(dbc)) {
+			eq = null;
+			we.eq.removeExercise(we);
+			return null;
+		}
 		return we;
 	}
 	public void removeWorkout(WithEx we) {

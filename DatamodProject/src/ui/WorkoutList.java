@@ -433,6 +433,7 @@ public class WorkoutList extends JFrame {
 				String note = wNoteField.getText();
 				if (wNames.getSelectedIndex() == 0) {
 					Workout w = dbc.createWorkout(new Timestamp(c.getTime().getTime()), performance, shape, note);
+					if (w == null) return;
 					wNamesList.addElement(w.toListString());
 					activeWList.add(w);
 				} else {
@@ -450,7 +451,7 @@ public class WorkoutList extends JFrame {
 				int index = wNames.getSelectedIndex();
 				if (index <= 0) return;
 				Workout w = activeWList.get(wNames.getSelectedIndex() - 1);
-				w.destroy(dbc);
+				if (!w.destroy(dbc)) return;
 				activeWList.remove(wNames.getSelectedIndex() - 1);
 				wNamesList.remove(wNames.getSelectedIndex());
 				refreshWList();
@@ -459,7 +460,7 @@ public class WorkoutList extends JFrame {
 				if (wNames.getSelectedIndex() <= 0 || eNames.getSelectedIndex() < 0) return;
 				int index = eNames.getSelectedIndex();
 				WithEx wx = activeEList.get(index);
-				wx.destroy(dbc);
+				if (!wx.destroy(dbc)) return;
 				activeEList.remove(index);
 				eNamesList.remove(index);
 				eNames.setSelectedIndex(index == eNamesList.size() ? index - 1 : index);
@@ -475,6 +476,7 @@ public class WorkoutList extends JFrame {
 					}
 				}
 				WithEx we = w.createWithEx(max + 1, ex, dbc);
+				if (we == null) return;
 				activeEList.add(we);
 				eNamesList.addElement(we.toWString());
 				refreshWList();
@@ -490,24 +492,20 @@ public class WorkoutList extends JFrame {
 			} else if (command.equals("editExercise")) {
 				int index = feNames.getSelectedIndex();
 				if (index < 0) return;
-				if (index == 0) {
-					new EditExercise(dbc, null, master);
-				} else {
-					editExercise.setEnabled(false);
-					removeExercise.setEnabled(false);
-					EditExercise editEx = new EditExercise(dbc, activeFEList.get(index - 1), master);
-					editEx.addWindowListener(new WindowAdapter() {
-						public void windowClosing(WindowEvent e) {
-							editExercise.setEnabled(true);
-							removeExercise.setEnabled(true);
-						}
-					});
-				}
+				EditExercise editEx = new EditExercise(dbc, index == 0 ? null : activeFEList.get(index - 1), master);
+				editExercise.setEnabled(false);
+				removeExercise.setEnabled(false);
+				editEx.addWindowListener(new WindowAdapter() {
+					public void windowClosing(WindowEvent e) {
+						editExercise.setEnabled(true);
+						removeExercise.setEnabled(true);
+					}
+				});
 			} else if (command.equals("removeExercise")) {
 				int index = feNames.getSelectedIndex();
 				if (index <= 0 ) return;
 				Exercise ex = activeFEList.get(index - 1);
-				ex.destroy(dbc);
+				if (!ex.destroy(dbc)) return;
 				activeFEList.remove(index - 1);
 				feNamesList.remove(index);
 				refreshWList();

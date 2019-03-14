@@ -38,7 +38,7 @@ public class DBController extends DBConn {
 	}
 	public Exercise createExercise(String description, String name) {
 		Exercise e = new Exercise(name, description);
-		e.initialize(this);
+		if (!e.initialize(this)) return null;
 		exercises.put(e.hashCode(), e);
 		return e;
 	}
@@ -88,7 +88,7 @@ public class DBController extends DBConn {
 	}
 	public Workout createWorkout(Timestamp timestamp, int performance, int shape, String note) {
 		Workout w = new Workout(timestamp, performance, shape, note);
-		w.initialize(this);
+		if (!w.initialize(this)) return null;
 		workouts.put(w.hashCode(), w);
 		return w;
 	}
@@ -138,7 +138,7 @@ public class DBController extends DBConn {
 	}
 	public Equipment createEquipment(String name, String description) {
 		Equipment e = new Equipment(name, description);
-		e.initialize(this);
+		if (!e.initialize(this)) return null;
 		equipment.put(e.hashCode(), e);
 		return e;
 	}
@@ -184,7 +184,7 @@ public class DBController extends DBConn {
 	}
 	public ExerciseGroup createExerciseGroup(String name) {
 		ExerciseGroup g = new ExerciseGroup(name);
-		g.initialize(this);
+		if (!g.initialize(this)) return null;
 		groups.put(g.hashCode(), g);
 		return g;
 	}

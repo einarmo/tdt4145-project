@@ -7,9 +7,9 @@ import java.util.Objects;
 public class WithGr extends BaseModel {
 	public Exercise ex;
 	public ExerciseGroup gr;
-	Long ExerciseId;
-	Long GroupId;
-	Integer intensity;
+	public Long ExerciseId;
+	public Long GroupId;
+	public Integer intensity;
 	public WithGr(int intensity, Exercise ex, ExerciseGroup gr) {
 		this.ex = ex;
 		this.gr = gr;

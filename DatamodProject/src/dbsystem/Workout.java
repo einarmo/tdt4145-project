@@ -123,7 +123,11 @@ public class Workout extends BaseModel implements Comparable<Workout>{
 	}
 	public WithEx createWithEx(int intorder, Exercise ex, DBController dbc) {
 		WithEx we = buildWithEx(intorder, ex, false);
-		we.initialize(dbc);
+		if (!we.initialize(dbc)) {
+			exercises.remove(we);
+			we.ex.removeWorkout(we);
+			return null;
+		}
 		return we;
 	}
 	public void removeExercise(WithEx we) {

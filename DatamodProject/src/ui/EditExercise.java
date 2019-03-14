@@ -17,6 +17,7 @@ import javax.swing.event.ListSelectionListener;
 import dbsystem.Equipment;
 import dbsystem.Exercise;
 import dbsystem.ExerciseGroup;
+import dbsystem.WithEq;
 import dbsystem.WithGr;
 
 import java.awt.Dimension;
@@ -25,6 +26,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -36,7 +39,7 @@ public class EditExercise extends JFrame {
 	JList<String> grNames, fgrNames, eqNames;
 	JPanel mainPanel;
 	JTextPane eInfo, grInfo, eqInfo;
-	JButton save, addGroup, removeGroup, setEquip, removeEquip;
+	JButton save, addGroup, removeGroup, setEquip, removeEquip, deleteEquip, deleteGroup, editEquip, editGroup;
 	DefaultListModel<String> grNamesList, fgrNamesList, eqNamesList;
 	JTextField eName, eqSets, eqKilos, grInt;
 	JTextArea eDesc;
@@ -243,6 +246,31 @@ public class EditExercise extends JFrame {
 		grInt.setText("5");
 		mainPanel.add(grInt, c);
 		
+		c.gridx = 5;
+		c.gridy = 2;
+		editGroup = new JButton("Edit/New group");
+		editGroup.setActionCommand("editGroup");
+		editGroup.addActionListener(new ButtonControl(this));
+		mainPanel.add(editGroup, c);
+		
+		c.gridy = 3;
+		deleteGroup = new JButton("Delete group");
+		deleteGroup.setActionCommand("deleteGroup");
+		deleteGroup.addActionListener(new ButtonControl());
+		mainPanel.add(deleteGroup, c);
+		
+		c.gridy = 4;
+		editEquip = new JButton("Edit/New equipment");
+		editEquip.setActionCommand("editEquip");
+		editEquip.addActionListener(new ButtonControl(this));
+		mainPanel.add(editEquip, c);
+		
+		c.gridy = 5;
+		deleteEquip = new JButton("Delete equipment");
+		deleteEquip.setActionCommand("deleteEquip");
+		deleteEquip.addActionListener(new ButtonControl());
+		mainPanel.add(deleteEquip, c);
+		
 		
 		
 		if (active != null) {
@@ -258,7 +286,7 @@ public class EditExercise extends JFrame {
 		loadGrList();
 		loadFGrList();
 		loadEqList();
-		removeEquip.setEnabled(active.eq != null);
+		removeEquip.setEnabled(active != null && active.eq != null);
 		addGroup.setEnabled(false);
 		removeGroup.setEnabled(false);
 		setEquip.setEnabled(false);
@@ -269,22 +297,14 @@ public class EditExercise extends JFrame {
 		activeFGrList.clear();
 		fgrNamesList.addElement("New Group...");
 		for (ExerciseGroup gr : fullGrList) {
-			boolean cont = false;
-			for (WithGr wgr : activeGrList) {
-				if (wgr.gr == gr) {
-					cont = true;
-					break;
-				}
-			}
-			if (!cont) {
-				activeFGrList.add(gr);
-				fgrNamesList.addElement(gr.toListString());
-			}
+			activeFGrList.add(gr);
+			fgrNamesList.addElement(gr.toListString());
 		}
 		fgrNames.setSelectedIndex(index);
 	}
 	void loadGrList() {
 		grNamesList.clear();
+		activeGrList.clear();
 		if (active == null) return;
 		for (WithGr wgr : active.groups) {
 			grNamesList.addElement(wgr.toEListString());
@@ -293,11 +313,29 @@ public class EditExercise extends JFrame {
 	}
 	void loadEqList() {
 		eqNamesList.clear();
+		activeEqList.clear();
 		eqNamesList.addElement("New Equipment...");
 		for (Equipment eq : fullEqList) {
 			eqNamesList.addElement(eq.toListString());
 			activeEqList.add(eq);
 		}
+	}
+	public void refreshGroup() {
+		if (fgrNames.getSelectedIndex() > 0) {
+			ExerciseGroup gr = activeFGrList.get(fgrNames.getSelectedIndex() - 1);
+			grInfo.setText(gr.toDescString());
+		}
+		loadGrList();
+		for (int i = 1; i <= activeFGrList.size(); i++) {
+			fgrNamesList.set(i, activeFGrList.get(i-1).toListString());
+		}
+		if (active != null) {
+			eInfo.setText(active.toDescString());
+		}
+	}
+	public void addFGr(ExerciseGroup gr) {
+		fullGrList.add(gr);
+		loadFGrList();
 	}
 	class FGrSelObject implements ListSelectionListener {
 		@Override
@@ -308,7 +346,14 @@ public class EditExercise extends JFrame {
 				grInfo.setText("");
 				return;
 			}
-			addGroup.setEnabled(true);
+			ExerciseGroup gr = activeFGrList.get(fgrNames.getSelectedIndex() - 1);
+			boolean cont = false;
+			for (WithGr wgr : activeGrList) {
+				if (wgr.GroupId == gr.id) {
+					cont = true;
+				}
+			}
+			addGroup.setEnabled(!cont && active != null);
 			grInfo.setText(activeFGrList.get(fgrNames.getSelectedIndex() - 1).toDescString());
 		}
 	}
@@ -334,11 +379,20 @@ public class EditExercise extends JFrame {
 				setEquip.setEnabled(false);
 				return;
 			}
-			setEquip.setEnabled(true);
+			setEquip.setEnabled(active != null);
 			eqInfo.setText(activeEqList.get(eqNames.getSelectedIndex() - 1).toDescString());
 		}
 	}
 	class ButtonControl implements ActionListener {
+		EditExercise emaster;
+		public ButtonControl() {
+			super();
+			this.emaster = null;
+		}
+		public ButtonControl(EditExercise emaster) {
+			super();
+			this.emaster = emaster;
+		}
 		public void actionPerformed(ActionEvent e) {
 			String command = e.getActionCommand();
 			if (command.contentEquals("addGroup")) {
@@ -348,16 +402,16 @@ public class EditExercise extends JFrame {
 				try { intensity = Integer.valueOf(grInt.getText()); } catch (Exception ex) { intensity = null; }
 				if (intensity == null || intensity < 1 || intensity > 10) return;
 				WithGr wgr = active.createWithGr(intensity, gr, dbc);
+				if (wgr == null) return;
 				grNamesList.addElement(wgr.toEListString());
 				activeGrList.add(wgr);
 				loadFGrList();
 			} else if (command.contentEquals("removeGroup")) {
 				if (grNames.getSelectedIndex() < 0) return;
 				WithGr wgr = activeGrList.get(grNames.getSelectedIndex());
-				wgr.destroy(dbc);
+				if (!wgr.destroy(dbc)) return;
 				activeGrList.remove(grNames.getSelectedIndex());
 				grNamesList.remove(grNames.getSelectedIndex());
-				loadFGrList();
 			} else if (command.contentEquals("setEquip")) {
 				if (eqNames.getSelectedIndex() <= 0) return;
 				Equipment eq = activeEqList.get(eqNames.getSelectedIndex() - 1);
@@ -376,21 +430,65 @@ public class EditExercise extends JFrame {
 				} else {
 					active.eq.destroy(dbc);
 					active.eq = null;
-					active.createWithEq(sets, kilos, eq, dbc);
+					WithEq we = active.createWithEq(sets, kilos, eq, dbc);
+					if (we == null) return;
+					removeEquip.setEnabled(true);
 				}
-				removeEquip.setEnabled(true);
 			} else if (command.contentEquals("removeEquip")) {
 				if (active.eq == null) return;
-				active.eq.destroy(dbc);
+				if (!active.eq.destroy(dbc)) return;
 				active.eq = null;
 				removeEquip.setEnabled(false);
 			} else if (command.contentEquals("save")) {
 				String name = eName.getText();
 				if (name == null || name.isEmpty()) return;
 				String description = eDesc.getText();
-				active.name = name;
-				active.description = description;
-				active.save(dbc);
+				if (active != null) {
+					active.name = name;
+					active.description = description;
+					active.save(dbc);
+				} else {
+					active = new Exercise(name, description);
+					if (!active.initialize(dbc)) return;
+					master.addFE(active);
+					if (fgrNames.getSelectedIndex() > 0) addGroup.setEnabled(true);
+					setTitle("Edit Exercise");
+				}
+			} else if (command.contentEquals("editEquip")) {
+				
+				return;
+			} else if (command.contentEquals("deleteEquip")) {
+				if (eqNames.getSelectedIndex() <= 0) return;
+				int index = eqNames.getSelectedIndex();
+				Equipment eq = activeEqList.get(index - 1);
+				if (!eq.destroy(dbc)) return;
+				fullEqList.remove(eq);
+				activeEqList.remove(index - 1);
+				eqNamesList.remove(index);
+				eqNames.setSelectedIndex(index == eqNamesList.size() ? index - 1 : index);
+			} else if (command.contentEquals("editGroup")) {
+				int index = fgrNames.getSelectedIndex();
+				if (index < 0) return;
+				EditGroup editGr = new EditGroup(dbc, index == 0 ? null : activeFGrList.get(index - 1), emaster);
+				editGroup.setEnabled(false);
+				deleteGroup.setEnabled(false);
+				editGr.addWindowListener(new WindowAdapter() {
+					public void windowClosing(WindowEvent e) {
+						editGroup.setEnabled(true);
+						deleteGroup.setEnabled(true);
+					}
+				});
+				return;
+			} else if (command.contentEquals("deleteGroup")) {
+				if (fgrNames.getSelectedIndex() <= 0) return;
+				int index = fgrNames.getSelectedIndex();
+				ExerciseGroup gr = activeFGrList.get(index - 1);
+				if (!gr.destroy(dbc)) return;
+				fullGrList.remove(gr);
+				activeFGrList.remove(index - 1);
+				fgrNamesList.remove(index);
+				fgrNames.setSelectedIndex(index == fgrNamesList.size() ? index - 1 : index);
+				loadGrList();
 			}
 			eInfo.setText(active.toDescString());
 			master.refreshExercises();

@@ -12,7 +12,7 @@ public class ExerciseGroup extends BaseModel implements Comparable<ExerciseGroup
 	ExerciseGroup(long id) {
 		this.id = id;
 	}
-	ExerciseGroup(String name) {
+	public ExerciseGroup(String name) {
 		this.name = name;
 	}
 	@Override
@@ -66,7 +66,7 @@ public class ExerciseGroup extends BaseModel implements Comparable<ExerciseGroup
 		return "Group: " + id + ", name: " + name;
 	}
 	public String toDescString() {
-		return "<html><b>Group:\t</b>" + id + "<br>name:\t" + name + "</html>";
+		return "<html><b>Group:\t</b>" + id + "<br>name:\t" + name + "<br><br>Exercises:\t" + exercises.size() + "</html>";
 	}
 	public WithGr buildWithGr(int intensity, Exercise ex, boolean create) {
 		Long ExerciseId = ex.id;
