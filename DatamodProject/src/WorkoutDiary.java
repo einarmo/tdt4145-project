@@ -1,5 +1,3 @@
-import java.util.Scanner;
-
 import dbsystem.DBController;
 import dbsystem.Workout;
 import ui.WorkoutList;
@@ -11,7 +9,7 @@ public class WorkoutDiary {
 	public static void main(String[] args) {
 		DBController dbc = new DBController();
 		dbc.createdb();
-		Equipment e = dbc.createEquipment("Handlebar big", "Very long and even prettier");
+		/* Equipment e = dbc.createEquipment("Handlebar big", "Very long and even prettier");
 		
 		Workout w = dbc.createWorkout(6, 6, "I'm very tired now thanks");
 		dbc.createWorkout(1, 1, "Test 1");
@@ -37,7 +35,7 @@ public class WorkoutDiary {
 		ex2.createWithGr(7, exg, dbc);
 		ex.createWithEq(5, 2.5, e, dbc);
 		
-		dbc.wipe();
+		dbc.wipe(); */
 		WorkoutList ui = new WorkoutList(dbc);
 		ui.setWList(dbc.fetchWorkouts(0, 0));
 		ui.setFEList(dbc.fetchExercises(0, 0));

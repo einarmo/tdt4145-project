@@ -71,7 +71,8 @@ public class Equipment extends BaseModel {
 		return "id: " + id + ", name: " + name;
 	}
 	public String toDescString() {
-		return "<html><b>Equipment:</b>\t" + id + "<br>name:\t" + name + "<br>description: " + description;
+		return "<html><b>Equipment:</b>\t" + id + "<br>name:\t" + name + "<br>description: " + description
+				+ "<br><br>Exercises:\t" + exercises.size() +"</html>";
 	}
 	public WithEq buildWithEq(int sets, double kilos, Exercise ex, boolean create) {
 		Long ExerciseId = ex.id;

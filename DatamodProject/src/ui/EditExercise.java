@@ -290,6 +290,10 @@ public class EditExercise extends JFrame {
 		addGroup.setEnabled(false);
 		removeGroup.setEnabled(false);
 		setEquip.setEnabled(false);
+		editEquip.setEnabled(false);
+		deleteEquip.setEnabled(false);
+		editGroup.setEnabled(false);
+		deleteGroup.setEnabled(false);
 	}
 	void loadFGrList() {
 		int index = fgrNames.getSelectedIndex();
@@ -333,19 +337,38 @@ public class EditExercise extends JFrame {
 			eInfo.setText(active.toDescString());
 		}
 	}
+	public void refreshEquip() {
+		if (eqNames.getSelectedIndex() > 0) {
+			Equipment eq = activeEqList.get(eqNames.getSelectedIndex() - 1);
+			eqInfo.setText(eq.toDescString());
+		}
+		for (int i = 1; i <= activeEqList.size(); i++) {
+			eqNamesList.set(i, activeEqList.get(i-1).toListString());
+		}
+		if (active != null) {
+			eInfo.setText(active.toDescString());
+		}
+	}
 	public void addFGr(ExerciseGroup gr) {
 		fullGrList.add(gr);
 		loadFGrList();
+	}
+	public void addEq(Equipment eq) {
+		fullEqList.add(eq);
+		loadEqList();
 	}
 	class FGrSelObject implements ListSelectionListener {
 		@Override
 		public void valueChanged(ListSelectionEvent e) {
 			if (e.getValueIsAdjusting()) return;
+			if (fgrNames.getSelectedIndex() == 0) editGroup.setEnabled(true);
 			if (fgrNames.getSelectedIndex() <= 0) {
 				addGroup.setEnabled(false);
+				deleteGroup.setEnabled(false);
 				grInfo.setText("");
 				return;
 			}
+
 			ExerciseGroup gr = activeFGrList.get(fgrNames.getSelectedIndex() - 1);
 			boolean cont = false;
 			for (WithGr wgr : activeGrList) {
@@ -353,6 +376,8 @@ public class EditExercise extends JFrame {
 					cont = true;
 				}
 			}
+			deleteGroup.setEnabled(true);
+			editGroup.setEnabled(true);
 			addGroup.setEnabled(!cont && active != null);
 			grInfo.setText(activeFGrList.get(fgrNames.getSelectedIndex() - 1).toDescString());
 		}
@@ -373,13 +398,16 @@ public class EditExercise extends JFrame {
 		@Override
 		public void valueChanged(ListSelectionEvent e) {
 			if (e.getValueIsAdjusting()) return;
-			if (e.getValueIsAdjusting()) return;
+			if (eqNames.getSelectedIndex() == 0) editEquip.setEnabled(true);
 			if (eqNames.getSelectedIndex() <= 0) {
 				eqInfo.setText("");
 				setEquip.setEnabled(false);
+				deleteEquip.setEnabled(false);
 				return;
 			}
 			setEquip.setEnabled(active != null);
+			deleteEquip.setEnabled(true);
+			editEquip.setEnabled(true);
 			eqInfo.setText(activeEqList.get(eqNames.getSelectedIndex() - 1).toDescString());
 		}
 	}
@@ -412,6 +440,17 @@ public class EditExercise extends JFrame {
 				if (!wgr.destroy(dbc)) return;
 				activeGrList.remove(grNames.getSelectedIndex());
 				grNamesList.remove(grNames.getSelectedIndex());
+				if (fgrNames.getSelectedIndex() > 0) {
+					boolean cont = false;
+					ExerciseGroup sel = activeFGrList.get(fgrNames.getSelectedIndex() - 1);
+					for (WithGr wg : activeGrList) {
+						if (wg.GroupId == sel.id) {
+							cont = true;
+							break;
+						}
+					}
+					addGroup.setEnabled(!cont);
+				}
 			} else if (command.contentEquals("setEquip")) {
 				if (eqNames.getSelectedIndex() <= 0) return;
 				Equipment eq = activeEqList.get(eqNames.getSelectedIndex() - 1);
@@ -448,14 +487,24 @@ public class EditExercise extends JFrame {
 					active.description = description;
 					active.save(dbc);
 				} else {
-					active = new Exercise(name, description);
-					if (!active.initialize(dbc)) return;
+					active = dbc.createExercise(description, name);
+					if (active == null) return;
 					master.addFE(active);
 					if (fgrNames.getSelectedIndex() > 0) addGroup.setEnabled(true);
 					setTitle("Edit Exercise");
 				}
 			} else if (command.contentEquals("editEquip")) {
-				
+				int index = eqNames.getSelectedIndex();
+				if (index < 0) return;
+				EditEquipment editEq = new EditEquipment(dbc, index == 0 ? null : activeEqList.get(index - 1), emaster);
+				editEquip.setEnabled(false);
+				deleteEquip.setEnabled(false);
+				editEq.addWindowListener(new WindowAdapter() {
+					public void windowClosing(WindowEvent e) {
+						editEquip.setEnabled(true);
+						deleteEquip.setEnabled(true);
+					}
+				});
 				return;
 			} else if (command.contentEquals("deleteEquip")) {
 				if (eqNames.getSelectedIndex() <= 0) return;

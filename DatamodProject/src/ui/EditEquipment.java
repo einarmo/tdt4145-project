@@ -11,26 +11,30 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.WindowConstants;
 
 import dbsystem.DBController;
+import dbsystem.Equipment;
 import dbsystem.ExerciseGroup;
+import ui.EditGroup.ButtonControl;
 
-public class EditGroup extends JFrame {
-	private static final long serialVersionUID = 3L;
+public class EditEquipment extends JFrame {
+	private static final long serialVersionUID = 4L;
 	JPanel mainPanel;
-	JTextPane grInfo;
+	JTextPane eqInfo;
 	JButton save;
-	JTextField grname;
+	JTextField eqname;
 	JLabel nameLabel;
+	JTextArea desc;
 	Font font = new Font("serif", Font.PLAIN, 14);
-	ExerciseGroup active;
+	Equipment active;
 	DBController dbc;
 	EditExercise master;
-	public EditGroup(DBController dbc, ExerciseGroup active, EditExercise master) {
-		super(active == null ? "New Exercise Group" : "Edit Exercise Group");
+	public EditEquipment(DBController dbc, Equipment active, EditExercise master) {
+		super(active == null ? "New Equipment" : "Edit Equipment");
 		this.dbc = dbc;
 		this.active = active;
 		this.master = master;
@@ -42,10 +46,10 @@ public class EditGroup extends JFrame {
 		mainPanel.setPreferredSize(new Dimension(300, 600));
 		mainPanel.setFont(font);
 		
-		grInfo = new JTextPane();
-		grInfo.setContentType("text/html");
-		grInfo.setEditable(false);
-		grInfo.setPreferredSize(new Dimension(300, 400));
+		eqInfo = new JTextPane();
+		eqInfo.setContentType("text/html");
+		eqInfo.setEditable(false);
+		eqInfo.setPreferredSize(new Dimension(300, 400));
 		c.weightx = 1.0;
 		c.weighty = 1.0;
 		c.gridx = 0;
@@ -53,7 +57,7 @@ public class EditGroup extends JFrame {
 		c.gridwidth = 2;
 		c.fill = GridBagConstraints.BOTH;
 		c.anchor = GridBagConstraints.PAGE_START;
-		mainPanel.add(grInfo, c);
+		mainPanel.add(eqInfo, c);
 		
 		c.gridy = 1;
 		c.weighty = 0;
@@ -63,20 +67,27 @@ public class EditGroup extends JFrame {
 		mainPanel.add(nameLabel, c);
 		
 		c.gridx = 1;
-		grname = new JTextField();
-		mainPanel.add(grname, c);
+		eqname = new JTextField();
+		mainPanel.add(eqname, c);
 		
-		c.gridy = 2;
 		c.gridx = 0;
+		c.gridy = 2;
 		c.gridwidth = 2;
+		c.gridheight = 2;
+		desc = new JTextArea();
+		mainPanel.add(desc, c);
+		
+		c.gridy = 4;
+		c.gridheight = 1;
 		save = new JButton("Save");
 		save.setActionCommand("save");
 		save.addActionListener(new ButtonControl());
 		mainPanel.add(save, c);
 		
 		if (active != null) {
-			grInfo.setText(active.toDescString());
-			grname.setText(active.name);
+			eqInfo.setText(active.toDescString());
+			eqname.setText(active.name);
+			desc.setText(active.description);
 		}
 		
 		add(mainPanel);
@@ -88,19 +99,21 @@ public class EditGroup extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			String command = e.getActionCommand();
 			if (command.contentEquals("save")) {
-				String name = grname.getText();
+				String name = eqname.getText();
 				if (name == null || name.isEmpty()) return;
+				String description = desc.getText();
 				if (active != null) {
 					active.name = name;
+					active.description = description;
 					active.save(dbc);
-					master.refreshGroup();
+					master.refreshEquip();
 				} else {
-					active = dbc.createExerciseGroup(name);
+					active = dbc.createEquipment(name, description);
 					if (active == null) return;
-					master.addFGr(active);
-					setTitle("Edit Exercise Group");
+					master.addEq(active);
+					setTitle("Edit Equipment");
 				}
-				grInfo.setText(active.toDescString());
+				eqInfo.setText(active.toDescString());
 			}
 		}
 	}
