@@ -12,7 +12,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -29,13 +28,9 @@ import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DocumentFilter;
 import javax.swing.text.AbstractDocument;
 
 import dbsystem.DBController;
-import dbsystem.Equipment;
 import dbsystem.Exercise;
 import dbsystem.ExerciseGroup;
 import dbsystem.WithEx;
@@ -47,12 +42,13 @@ public class WorkoutList extends JFrame {
 	JList<String> wNames, eNames, feNames, grNames;
 	JPanel mainPanel;
 	JTextPane wInfo, eInfo, wOutput;
-	JButton wSave, wDelete, wAdd, wRemove, swapUp, swapDown, editExercise, removeExercise;
+	JButton wSave, wDelete, wAdd, wRemove, swapUp, swapDown, editExercise, removeExercise, eStats, grStats, setWLimit;
 	DefaultListModel<String> wNamesList, eNamesList, feNamesList, grNamesList;
-	String[] wInputLabelText = {"Performance (0-10)", "Shape (0-10)", "dd", "mm", "yyyy", "hh"};
+	String[] wInputLabelText = {"Performance (0-10)", "Shape (0-10)"};
 	JLabel[] wInputLabels = new JLabel[wInputLabelText.length];
 	JFormattedTextField[] wTextFields = new JFormattedTextField[wInputLabelText.length];
 	JTextArea wNoteField = new JTextArea();
+	JTextField wLimit;
 	Font font = new Font("serif", Font.PLAIN, 14);
 	ArrayList<Workout> activeWList = new ArrayList<Workout>();
 	ArrayList<WithEx> activeEList = new ArrayList<WithEx>();
@@ -62,6 +58,8 @@ public class WorkoutList extends JFrame {
 	final static int width = 1600;
 	final static int height = 600;
 	DBController dbc;
+	DateTimePicker dtp, eMinDtp, eMaxDtp;
+	Integer wLimitNum;
 	public WorkoutList(DBController dbc) {
 		super("Workout Diary");
 		this.dbc = dbc;
@@ -86,7 +84,7 @@ public class WorkoutList extends JFrame {
 		c.gridy = 0;
 		c.fill = GridBagConstraints.BOTH;
 		c.anchor = GridBagConstraints.PAGE_START;
-		c.gridwidth = wInputLabels.length;
+		c.gridwidth = 3;
 		c.gridheight = 4;
 		mainPanel.add(wNamesScroll, c);
 		
@@ -106,15 +104,25 @@ public class WorkoutList extends JFrame {
 			c.weightx = 1;
 			wTextFields[i] = new JFormattedTextField();
 			wTextFields[i].setFont(font);
-			wTextFields[i].setColumns(i == 4 ? 4 : 2);
-			((AbstractDocument) wTextFields[i].getDocument()).setDocumentFilter(new WFieldFilter(i == 4 ? 4 : 2));
+			wTextFields[i].setColumns(2);
+			((AbstractDocument) wTextFields[i].getDocument()).setDocumentFilter(new FieldLengthFilter(2));
 			mainPanel.add(wTextFields[i], c);
 		}
 		
+		c.weightx = 1;
+		c.weighty = 0;
+		c.gridx = 2;
+		c.gridy = 4;
+		c.gridheight = 2;
+		dtp = new DateTimePicker();
+		mainPanel.add(dtp, c);
+		
+		
+		c.gridheight = 1;
 		c.weighty = 1.0;
 		c.weightx = 1.0;
 		c.gridy = 6;
-		c.gridwidth = wInputLabels.length;
+		c.gridwidth = 3;
 		c.gridheight = 2;
 		c.gridx = 0;
 		wNoteField.setFont(font);
@@ -123,7 +131,7 @@ public class WorkoutList extends JFrame {
 		
 		c.gridy = 0;
 		c.weighty = 1.0;
-		c.gridx = wInputLabels.length + 1;
+		c.gridx = 4;
 		c.gridheight = 2;
 		c.gridwidth = 1;
 		c.weightx = 0;
@@ -142,18 +150,18 @@ public class WorkoutList extends JFrame {
 		eInfo.setFont(font);
 		mainPanel.add(eInfo, c);
 		
-		c.gridx = wInputLabels.length;
+		c.gridx = 3;
 		c.gridheight = 1;
 		c.gridy = 4;
 		c.weighty = 0;
-		wSave = new JButton("Save");
+		wSave = new JButton("Save Workout");
 		wSave.setFont(font);
 		wSave.addActionListener(new ButtonControl());
 		wSave.setActionCommand("wsave");
 		mainPanel.add(wSave, c);
 		
 		c.gridy = 5;
-		wDelete = new JButton("Delete");
+		wDelete = new JButton("Delete Workout");
 		wDelete.setFont(font);
 		wDelete.setActionCommand("wDelete");
 		wDelete.addActionListener(new ButtonControl());
@@ -172,7 +180,7 @@ public class WorkoutList extends JFrame {
 		eNames.setVisibleRowCount(-1);
 		eNames.setFont(font);
 		eNames.addListSelectionListener(new ESelObject());
-		c.gridx = wInputLabels.length;
+		c.gridx = 3;
 		c.gridy = 0;
 		c.weightx = 0;
 		c.gridheight = 4;
@@ -188,60 +196,62 @@ public class WorkoutList extends JFrame {
 		feNames.setVisibleRowCount(-1);
 		feNames.setFont(font);
 		feNames.addListSelectionListener(new FESelObject());
-		c.gridx = wInputLabels.length + 2;
+		c.gridx = 5;
 		c.gridy = 0;
 		c.gridheight = 4;
+		c.gridwidth = 2;
 		JScrollPane feNamesScroll = new JScrollPane(feNames);
 		feNamesScroll.setPreferredSize(new Dimension(200, 200));
 
 		mainPanel.add(feNamesScroll, c);
 		
-		c.gridx = wInputLabels.length + 1;
-		
+		c.gridx = 4;
+		c.gridwidth = 1;
 		c.weighty = 0.2;
-		wAdd = new JButton("<< Add");
+		wAdd = new JButton("<< Add Exercise");
 		wAdd.setActionCommand("wAdd");
 		wAdd.addActionListener(new ButtonControl());
 		c.gridy = 4;
 		c.gridheight = 1;
 		mainPanel.add(wAdd, c);
 		
-		wRemove = new JButton("Remove >>");
+		wRemove = new JButton("Remove Exercise >>");
 		wRemove.setActionCommand("wRemove");
 		wRemove.addActionListener(new ButtonControl());
 		c.gridy = 5;
 		mainPanel.add(wRemove, c);
 		
-		swapUp = new JButton("Move up");
+		swapUp = new JButton("Move Exercise up");
 		swapUp.setActionCommand("swapUp");
 		swapUp.addActionListener(new ButtonControl());
 		c.gridy = 6;
 		mainPanel.add(swapUp, c);
 		
-		swapDown = new JButton("Move down");
+		swapDown = new JButton("Move Exercise down");
 		swapDown.setActionCommand("swapDown");
 		swapDown.addActionListener(new ButtonControl());
 		c.gridy = 7;
 		mainPanel.add(swapDown, c);
 		
-		editExercise = new JButton("Edit/New");
+		editExercise = new JButton("Edit/New Exercise");
 		editExercise.setActionCommand("editExercise");
 		editExercise.addActionListener(new ButtonControl(this));
 		c.gridy = 4;
-		c.gridx = wInputLabels.length + 2;
+		c.gridx = 5;
+		c.gridwidth = 2;
 		mainPanel.add(editExercise, c);
 		
-		removeExercise = new JButton("Delete");
+		removeExercise = new JButton("Delete Exercise");
 		removeExercise.setActionCommand("removeExercise");
 		removeExercise.addActionListener(new ButtonControl(this));
 		c.gridy = 5;
-		c.gridx = wInputLabels.length + 2;
 		mainPanel.add(removeExercise, c);
 		
 		c.gridy = 0;
-		c.gridheight = 2;
+		c.gridheight = 4;
 		c.weighty = 1;
-		c.gridx = wInputLabels.length + 3;
+		c.gridx = 7;
+		c.gridwidth = 1;
 		grNamesList = new DefaultListModel<String>();
 		grNames = new JList<String>(grNamesList);
 		grNames.setFont(font);
@@ -253,6 +263,50 @@ public class WorkoutList extends JFrame {
 		grNamesScroll.setPreferredSize(new Dimension(200, 200));
 		mainPanel.add(grNamesScroll, c);
 		
+		c.gridy = 6;
+		c.gridheight = 1;
+		c.weighty = 0;
+		c.gridwidth = 2;
+		c.gridx = 5;
+		eStats = new JButton("Exercise-stats between: ");
+		eStats.setActionCommand("eStats");
+		eStats.addActionListener(new ButtonControl(this));
+		mainPanel.add(eStats, c);
+		
+		c.gridwidth = 1;
+		c.weightx = 0;
+		c.gridy = 7;
+		setWLimit = new JButton("Limit W");
+		setWLimit.setActionCommand("wLimit");
+		setWLimit.addActionListener(new ButtonControl());
+		mainPanel.add(setWLimit, c);
+		
+		c.gridx = 6;
+		wLimit = new JTextField();
+		mainPanel.add(wLimit, c);
+		
+		c.gridx = 7;
+		c.gridy = 6;
+		eMinDtp = new DateTimePicker();
+		mainPanel.add(eMinDtp, c);
+		
+		eMaxDtp = new DateTimePicker();
+		c.gridy = 7;
+		mainPanel.add(eMaxDtp, c);
+		
+		c.gridy = 4;
+		grStats = new JButton("Group-stats between:");
+		grStats.setActionCommand("grStats");
+		grStats.addActionListener(new ButtonControl(this));
+		mainPanel.add(grStats, c);
+		
+		c.gridy = 5;
+		JTextPane statsInfo = new JTextPane();
+		statsInfo.setEditable(false);
+		statsInfo.setText("Leave invalid for no upper/lower limit");
+		statsInfo.setFont(font);
+		mainPanel.add(statsInfo, c);
+		
 		add(mainPanel);
 		pack();
 		setVisible(true);
@@ -260,13 +314,17 @@ public class WorkoutList extends JFrame {
 		swapDown.setEnabled(false);
 		wAdd.setEnabled(false);
 		wRemove.setEnabled(false);
+		eStats.setEnabled(false);
+		grStats.setEnabled(false);
 	}
 	public void setWList(ArrayList<Workout> workouts) {
 		wNamesList.clear();
 		activeWList.clear();
 		wNamesList.addElement("New Workout...");
 		Collections.sort(workouts);
+		int ind = 0;
 		for (Workout w : workouts) {
+			if (wLimitNum != null && ind++ >= wLimitNum) break;
 			wNamesList.addElement(w.toListString());
 			activeWList.add(w);
 		}
@@ -352,8 +410,13 @@ public class WorkoutList extends JFrame {
 		}
 	}
 	public void addFE(Exercise ex) {
-		activeFEList.add(ex);
-		feNamesList.addElement(ex.toListString());
+		fullFEList.add(ex);
+		int index = grNames.getSelectedIndex();
+		if (index == 0) {
+			setFEList(fullFEList);
+		} else {
+			filterFEList(activeGrList.get(index - 1));
+		}
 	}
 	public void setGrList(ArrayList<ExerciseGroup> groups) {
 		activeGrList.clear();
@@ -371,23 +434,7 @@ public class WorkoutList extends JFrame {
 			grNamesList.addElement(gr.toListString());
 		}
 	}
-	class WFieldFilter extends DocumentFilter {
-		private int lim;
-		public WFieldFilter(int lim) {
-			this.lim = lim;
-		}
-		@Override
-		public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
-				throws BadLocationException {
-			int overLimit = (fb.getDocument().getLength() + text.length()) - lim - length;
-			if (overLimit > 0) {
-				text = text.substring(0, text.length() - overLimit);
-			}
-			if (text.length() > 0) {
-				super.replace(fb, offset, length, text, attrs);
-			}
-		}
-	}
+	
 	class WSelObject implements ListSelectionListener {
 		@Override
 		public void valueChanged(ListSelectionEvent e) {
@@ -395,13 +442,9 @@ public class WorkoutList extends JFrame {
 			if (wNames.getSelectedIndex() == 0) {
 				wTextFields[0].setText("5");
 				wTextFields[1].setText("5");
-				Calendar c = Calendar.getInstance();
-				wTextFields[2].setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
-				wTextFields[3].setText(String.valueOf(c.get(Calendar.MONTH) + 1));
-				wTextFields[4].setText(String.valueOf(c.get(Calendar.YEAR)));
-				wTextFields[5].setText(String.valueOf(c.get(Calendar.HOUR_OF_DAY)));
 				wNoteField.setText("");
 				wInfo.setText("");
+				dtp.setTime(Calendar.getInstance());
 				setEList(null);
 				wAdd.setEnabled(false);
 				wRemove.setEnabled(false);
@@ -415,14 +458,9 @@ public class WorkoutList extends JFrame {
 			Workout w = activeWList.get(wNames.getSelectedIndex() - 1);
 			wTextFields[0].setText(w.performance.toString());
 			wTextFields[1].setText(w.shape.toString());
-			Calendar c = Calendar.getInstance();
-			c.setTime(w.timestamp);
-			wTextFields[2].setText(String.valueOf(c.get(Calendar.DAY_OF_MONTH)));
-			wTextFields[3].setText(String.valueOf(c.get(Calendar.MONTH) + 1));
-			wTextFields[4].setText(String.valueOf(c.get(Calendar.YEAR)));
-			wTextFields[5].setText(String.valueOf(c.get(Calendar.HOUR_OF_DAY)));
 			wNoteField.setText(w.note);
 			wInfo.setText(w.toDescString());
+			dtp.setTime(w.timestamp);
 			setEList(w);
 			eNames.setSelectedIndex(eNamesList.size()-1);
 			swapUp.setEnabled(eNames.getSelectedIndex() > 0);
@@ -437,11 +475,13 @@ public class WorkoutList extends JFrame {
 			if (feNames.getSelectedIndex() == 0) {
 				eInfo.setText("");
 				wAdd.setEnabled(false);
+				eStats.setEnabled(false);
 				return;
 			}
-			wAdd.setEnabled(true);
+			wAdd.setEnabled(wNames.getSelectedIndex() > 0);
 			Exercise ex = activeFEList.get(feNames.getSelectedIndex() - 1);
 			eInfo.setText(ex.toDescString());
+			eStats.setEnabled(true);
 		}
 	}
 	class ESelObject implements ListSelectionListener {
@@ -451,6 +491,7 @@ public class WorkoutList extends JFrame {
 			eInfo.setText(ex.ex.toDescString());
 			swapUp.setEnabled(eNames.getSelectedIndex() != 0);
 			swapDown.setEnabled(eNames.getSelectedIndex() != eNamesList.size() - 1);
+			wRemove.setEnabled(true);
 		}
 	}
 	class GrSelObject implements ListSelectionListener {
@@ -459,8 +500,10 @@ public class WorkoutList extends JFrame {
 			if (e.getValueIsAdjusting() || index < 0) return;
 			if (index == 0) {
 				setFEList(fullFEList);
+				grStats.setEnabled(false);
 			} else {
 				filterFEList(activeGrList.get(index - 1));
+				grStats.setEnabled(true);
 			}
 		}
 	}
@@ -489,19 +532,14 @@ public class WorkoutList extends JFrame {
 					wOutput.setText("Shape must be an integer between 0 and 10");
 					return;
 				}
-				Calendar c = Calendar.getInstance();
-				try {
-					c.set(Integer.valueOf(wTextFields[4].getText()),
-							Integer.valueOf(wTextFields[3].getText()) - 1,
-							Integer.valueOf(wTextFields[2].getText()),
-							Integer.valueOf(wTextFields[5].getText()), 0, 0);
-				} catch (Exception ex) {
-					wOutput.setText("Date must be valid");
+				String note = wNoteField.getText();
+				Timestamp ts = dtp.getTime();
+				if (ts == null) {
+					wOutput.setText("Timestamp must be valid");
 					return;
 				}
-				String note = wNoteField.getText();
 				if (wNames.getSelectedIndex() == 0) {
-					Workout w = dbc.createWorkout(new Timestamp(c.getTime().getTime()), performance, shape, note);
+					Workout w = dbc.createWorkout(ts, performance, shape, note);
 					if (w == null) return;
 					wNamesList.addElement(w.toListString());
 					activeWList.add(w);
@@ -509,7 +547,7 @@ public class WorkoutList extends JFrame {
 					Workout w = activeWList.get(wNames.getSelectedIndex()-1);
 					w.performance = performance;
 					w.shape = shape;
-					w.timestamp = new Timestamp(c.getTime().getTime());
+					w.timestamp = ts;
 					w.note = note;
 					w.save(dbc);
 					wNamesList.set(wNames.getSelectedIndex(), w.toListString());
@@ -584,6 +622,18 @@ public class WorkoutList extends JFrame {
 					setEList(activeWList.get(wNames.getSelectedIndex() - 1));
 				}
 				feNames.setSelectedIndex(index == feNamesList.size() ? index - 1 : index);
+			} else if (command.contentEquals("eStats")) {
+				int index = feNames.getSelectedIndex();
+				if (index <= 0) return;
+				Timestamp start = eMinDtp.getTime();
+				Timestamp end = eMaxDtp.getTime();
+				new ExerciseStats(start, end, activeFEList.get(index - 1), dbc, master);
+			} else if (command.contentEquals("grStats")) {
+				int index = grNames.getSelectedIndex();
+				if (index <= 0) return;
+				Timestamp start = eMinDtp.getTime();
+				Timestamp end = eMaxDtp.getTime();
+				new GroupStats(start, end, activeGrList.get(index - 1), dbc, master);
 			}
 		}
 	}

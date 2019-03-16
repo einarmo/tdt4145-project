@@ -59,8 +59,8 @@ public abstract class DBConn {
 		Properties p = new Properties();
 		String[] data = readFileToString("config.txt", false).split("\n");
 		for (int i = 0; i < data.length; i++) {
-			String[] dt = data[i].split("=");
-			if (dt.length != 2)
+			String[] dt = data[i].split(" ")[0].split("=");
+			if (dt.length < 2)
 				throw new RuntimeException("Bad config");
 			dt[1] = dt[1].replaceAll("\n|\r\n|\r", "");
 			p.put(dt[0], dt[1]);

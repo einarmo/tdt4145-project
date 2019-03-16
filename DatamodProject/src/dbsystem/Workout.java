@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Objects;
@@ -17,6 +16,7 @@ public class Workout extends BaseModel implements Comparable<Workout>{
 	public Integer performance = null;
 	public Integer shape = null;
 	public String note = null;
+	public int tmpcount = 0;
 	public Workout(long id) {
 		this.id = id;
 	}
@@ -95,7 +95,10 @@ public class Workout extends BaseModel implements Comparable<Workout>{
 	}
 	public String toDescString() {
 		return "<html><b>Workout:</b>\t " + id + "<br>Performance:\t " + performance + "<br>Shape:\t\t " + shape
-				+ "<br>Exercises: " + exercises.size() + "<br>Note: <br>" + note.replace("\n", "<br>") + "</html>";
+				+ "<br>Exercises: " + exercises.size() + "<br>Note: <br>" + note.replace("\n", "<br>");
+	}
+	public String toStatDescString() {
+		return toDescString() + "<br><br>Count:\t" + tmpcount;
 	}
 	public void refreshExercises(DBController dbc) {
 		exercises.clear();

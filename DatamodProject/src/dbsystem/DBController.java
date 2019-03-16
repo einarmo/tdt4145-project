@@ -1,12 +1,12 @@
 package dbsystem;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Objects;
 
 public class DBController extends DBConn {
@@ -226,6 +226,57 @@ public class DBController extends DBConn {
 		} catch (Exception e) {
 			System.out.println("Failed to fetch equipment: " + e.getMessage());
 			return new ArrayList<ExerciseGroup>();
+		}
+	}
+	public ResultSet getExerciseStats(long eid, Timestamp start, Timestamp end) {
+		try {
+			PreparedStatement st = con.prepareStatement("SELECT count(*) as tcnt, count(DISTINCT subq.wid) as wcnt, "
+					+ "coalesce(sum(subq.performance), 0) as sumperf, coalesce(sum(subq.shape), 0) as sumshape FROM "
+					+ "(SELECT WithEx.ExerciseId AS id, WithEx.WorkoutId AS wid"
+					+ ", Workout.performance as performance, Workout.shape as shape "
+					+ "FROM WithEx INNER JOIN Workout ON WithEx.WorkoutId = Workout.id"
+					+ (start != null ? " AND Workout.timestamp>=?" : "")
+					+ (end != null ? " AND Workout.timestamp<=?" : "")
+					+ " AND WithEx.ExerciseId=?) as subq GROUP BY subq.id;");
+			int pindex = 1;
+			if (start != null) {
+				st.setTimestamp(pindex++, start);
+			}
+			if (end != null) {
+				st.setTimestamp(pindex++, end);
+			}
+			st.setLong(pindex, eid);
+			ResultSet rs = st.executeQuery();
+			return rs;
+		} catch (Exception e) {
+			System.out.println("Failed to get exercise stats: " + e.getMessage());
+			return null;
+		}
+	}
+	public ResultSet getGroupStats(long gid, Timestamp start, Timestamp end) {
+		try {
+			PreparedStatement st = con.prepareStatement("SELECT count(*) as tcnt, count(DISTINCT subq.wid) as wcnt, "
+					+ "coalesce(sum(subq.intensity), 0) as sumint, coalesce(sum(subq.performance), 0) as sumperf FROM "
+					+ "(SELECT WithGr.GroupId as id, WithEx.WorkoutId as wid, "
+					+ "WithGr.intensity as intensity, Workout.performance as performance "
+					+ "FROM WithGr INNER JOIN WithEx ON WithEx.ExerciseId=WithGr.ExerciseId "
+					+ "INNER JOIN Workout ON WithEx.WorkoutId = Workout.id"
+					+ (start != null ? " AND Workout.timestamp>=?" : "")
+					+ (end != null ? " AND Workout.timestamp<=?" : "")
+					+ " AND WithGr.GroupId=?) as subq GROUP BY subq.id;");
+			int pindex = 1;
+			if (start != null) {
+				st.setTimestamp(pindex++, start);
+			}
+			if (end != null) {
+				st.setTimestamp(pindex++, end);
+			}
+			st.setLong(pindex, gid);
+			ResultSet rs = st.executeQuery();
+			return rs;
+		} catch (Exception e) {
+			System.out.println("Failed to get group stats: " + e.getMessage());
+			return null;
 		}
 	}
 	public void wipe() {

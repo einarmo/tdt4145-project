@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Objects;
 
 public class ExerciseGroup extends BaseModel implements Comparable<ExerciseGroup> {
-	HashSet<WithGr> exercises;
+	public HashSet<WithGr> exercises;
 	public Long id;
 	public String name;
 	ExerciseGroup(long id) {
@@ -66,7 +66,7 @@ public class ExerciseGroup extends BaseModel implements Comparable<ExerciseGroup
 		return "Group: " + id + ", name: " + name;
 	}
 	public String toDescString() {
-		return "<html><b>Group:\t</b>" + id + "<br>name:\t" + name + "<br><br>Exercises:\t" + exercises.size() + "</html>";
+		return "<html><b>Group:\t</b>" + id + "<br>name:\t" + name + "<br><br>Exercises:\t" + exercises.size();
 	}
 	public WithGr buildWithGr(int intensity, Exercise ex, boolean create) {
 		Long ExerciseId = ex.id;

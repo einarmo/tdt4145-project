@@ -18,8 +18,6 @@ import javax.swing.WindowConstants;
 
 import dbsystem.DBController;
 import dbsystem.Equipment;
-import dbsystem.ExerciseGroup;
-import ui.EditGroup.ButtonControl;
 
 public class EditEquipment extends JFrame {
 	private static final long serialVersionUID = 4L;

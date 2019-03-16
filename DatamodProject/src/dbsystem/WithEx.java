@@ -55,9 +55,11 @@ public class WithEx extends BaseModel implements Comparable<WithEx> {
 			System.out.println("Failed to get attributes: " + tableName + " " + e.getMessage());
 		}
 	}
+	@Override
 	public int hashCode() {
-		return Objects.hash(intorder, ExerciseId);
+		return Objects.hash(intorder, ExerciseId, WorkoutId);
 	}
+	@Override
 	public boolean equals(Object other) {
 		return other instanceof WithEx && ((WithEx) other).intorder.equals(intorder)
 				&& ((WithEx) other).ExerciseId.equals(ExerciseId);
