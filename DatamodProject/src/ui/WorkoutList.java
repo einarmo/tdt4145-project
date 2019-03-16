@@ -54,6 +54,7 @@ public class WorkoutList extends JFrame {
 	ArrayList<WithEx> activeEList = new ArrayList<WithEx>();
 	ArrayList<Exercise> activeFEList = new ArrayList<Exercise>();
 	static ArrayList<Exercise> fullFEList = null;
+	static ArrayList<Workout> fullWList = null;
 	ArrayList<ExerciseGroup> activeGrList = new ArrayList<ExerciseGroup>();
 	final static int width = 1600;
 	final static int height = 600;
@@ -184,7 +185,6 @@ public class WorkoutList extends JFrame {
 		c.gridy = 0;
 		c.weightx = 0;
 		c.gridheight = 4;
-		// eNames.setPreferredSize(new Dimension(200, 400));
 		JScrollPane eNamesScroll = new JScrollPane(eNames);
 		eNamesScroll.setPreferredSize(new Dimension(200, 200));
 		mainPanel.add(eNamesScroll, c);
@@ -321,8 +321,9 @@ public class WorkoutList extends JFrame {
 		wNamesList.clear();
 		activeWList.clear();
 		wNamesList.addElement("New Workout...");
-		Collections.sort(workouts);
+		Collections.sort(workouts, Collections.reverseOrder());
 		int ind = 0;
+		fullWList = workouts;
 		for (Workout w : workouts) {
 			if (wLimitNum != null && ind++ >= wLimitNum) break;
 			wNamesList.addElement(w.toListString());
@@ -634,6 +635,13 @@ public class WorkoutList extends JFrame {
 				Timestamp start = eMinDtp.getTime();
 				Timestamp end = eMaxDtp.getTime();
 				new GroupStats(start, end, activeGrList.get(index - 1), dbc, master);
+			} else if (command.contentEquals("wLimit")) {
+				try {
+					wLimitNum = Integer.parseInt(wLimit.getText());
+				} catch (Exception ex) {
+					wLimitNum = null;
+				}
+				setWList(fullWList);
 			}
 		}
 	}
